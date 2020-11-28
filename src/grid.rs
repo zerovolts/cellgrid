@@ -1,4 +1,5 @@
 use std::{
+    collections::VecDeque,
     mem,
     ops::{Add, Sub},
 };
@@ -45,9 +46,51 @@ impl<T> Grid<T> {
             .and_then(|cell| Some(mem::replace(cell, value)))
     }
 
+    pub fn offset_iter(&self, starting_point: Coord, offsets: &[Coord]) -> SelectionIter<T> {
+        SelectionIter {
+            grid: self,
+            coords: Self::offsets_to_coords(starting_point, offsets).into(),
+        }
+    }
+
+    pub fn selection_iter(&self, coords: &[Coord]) -> SelectionIter<T> {
+        let coords_vec: Vec<_> = coords.into();
+        SelectionIter {
+            grid: self,
+            coords: coords_vec.into(),
+        }
+    }
+
+    fn offsets_to_coords(coord: Coord, offsets: &[Coord]) -> Vec<Coord> {
+        offsets.iter().map(|&offset| coord + offset).collect()
+    }
+
     fn coord_to_index(&self, coord: Coord) -> usize {
         let offset_coord = coord - self.offset;
         (offset_coord.0 + offset_coord.1 * self.dimensions.0 as i32) as usize
+    }
+}
+
+pub struct SelectionIter<'a, T> {
+    grid: &'a Grid<T>,
+    coords: VecDeque<Coord>,
+}
+
+impl<'a, T> Iterator for SelectionIter<'a, T> {
+    type Item = (Coord, &'a T);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        // Loop in case some of the offsets are invalid
+        while self.coords.len() > 0 {
+            let coord = self.coords.pop_front().unwrap();
+            if let Some(cell) = self.grid.get(coord) {
+                return Some((coord, cell));
+            } else {
+                continue;
+            }
+        }
+
+        None
     }
 }
 
