@@ -1,3 +1,7 @@
+use grid::Grid;
+
+mod grid;
+
 fn main() {
-    println!("Hello, world!");
+    let _grid = Grid::new((16, 16), (-8, -8), false);
 }
