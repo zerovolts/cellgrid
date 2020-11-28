@@ -61,6 +61,29 @@ impl<T> Grid<T> {
         }
     }
 
+    pub fn flood_iter(
+        &self,
+        starting_coord: Coord,
+        predicate: impl Fn(&T) -> bool + 'static,
+    ) -> FloodIter<T> {
+        let mut coords_to_search = VecDeque::new();
+        coords_to_search.push_back(starting_coord);
+
+        FloodIter {
+            grid: self,
+            predicate: Box::new(predicate),
+            searched_coords: vec![],
+            coords_to_search,
+        }
+    }
+
+    pub fn ortho_neighbor_coords(&self, coord: Coord) -> Vec<Coord> {
+        Self::offsets_to_coords(
+            coord,
+            &[Coord(1, 0), Coord(0, -1), Coord(-1, 0), Coord(0, 1)],
+        )
+    }
+
     fn offsets_to_coords(coord: Coord, offsets: &[Coord]) -> Vec<Coord> {
         offsets.iter().map(|&offset| coord + offset).collect()
     }
@@ -88,6 +111,50 @@ impl<'a, T> Iterator for SelectionIter<'a, T> {
             } else {
                 continue;
             }
+        }
+
+        None
+    }
+}
+
+pub struct FloodIter<'a, T> {
+    grid: &'a Grid<T>,
+    predicate: Box<dyn Fn(&T) -> bool>,
+    searched_coords: Vec<Coord>,
+    coords_to_search: VecDeque<Coord>,
+}
+
+impl<'a, T> Iterator for FloodIter<'a, T> {
+    type Item = (Coord, &'a T);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        while self.coords_to_search.len() > 0 {
+            let coord = self.coords_to_search.pop_front().unwrap();
+            let is_cell_included = self
+                .grid
+                .get(coord)
+                .and_then(|cell| Some((self.predicate)(cell)))
+                .unwrap_or(false);
+
+            self.searched_coords.push(coord);
+
+            if !is_cell_included {
+                continue;
+            }
+
+            let neighbor_coords = self
+                .grid
+                .ortho_neighbor_coords(coord)
+                .iter()
+                .filter(|&coord| {
+                    !(self.searched_coords.contains(coord) || self.coords_to_search.contains(coord))
+                })
+                .map(|&coord| coord)
+                .collect::<Vec<Coord>>();
+
+            self.coords_to_search.extend(neighbor_coords);
+
+            return Some((coord, self.grid.get(coord).unwrap()));
         }
 
         None

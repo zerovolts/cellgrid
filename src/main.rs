@@ -1,7 +1,16 @@
-use grid::Grid;
+use grid::{Coord, Grid};
 
 mod grid;
 
 fn main() {
-    let _grid = Grid::new((16, 16), (-8, -8), false);
+    let mut grid = Grid::new((16, 16), (-8, -8), false);
+    for cell in grid.cells.iter_mut() {
+        *cell = rand::random::<bool>();
+    }
+    println!("cells: {:?}", grid.cells);
+    println!(
+        "flood: {:?}",
+        grid.flood_iter(Coord(0, 0), |&cell| cell == true)
+            .collect::<Vec<(Coord, &bool)>>()
+    );
 }
