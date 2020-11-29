@@ -3,7 +3,7 @@ use grid::{Coord, Grid};
 mod grid;
 
 fn main() {
-    let mut grid = Grid::new((16, 16), (-8, -8), false);
+    let mut grid = Grid::new((16, 16), (-8, -8));
     for cell in grid.cells.iter_mut() {
         *cell = rand::random::<bool>();
     }

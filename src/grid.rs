@@ -12,12 +12,12 @@ pub struct Grid<T> {
 }
 
 impl<T> Grid<T> {
-    pub fn new(dimensions: (u32, u32), offset: (i32, i32), value: T) -> Self
+    pub fn new(dimensions: (u32, u32), offset: (i32, i32)) -> Self
     where
-        T: Clone,
+        T: Default + Clone,
     {
         Self {
-            cells: vec![value; (dimensions.0 * dimensions.1) as usize],
+            cells: vec![T::default(); (dimensions.0 * dimensions.1) as usize],
             dimensions,
             offset: Coord(offset.0, offset.1),
         }
@@ -33,23 +33,60 @@ impl<T> Grid<T> {
     }
 
     pub fn set(&mut self, coord: Coord, value: T) {
-        let index = self.coord_to_index(coord);
-        if let Some(cell) = self.cells.get_mut(index) {
+        if let Some(cell) = self.get_mut(coord) {
             *cell = value;
         }
     }
 
     pub fn replace(&mut self, coord: Coord, value: T) -> Option<T> {
-        let index = self.coord_to_index(coord);
-        self.cells
-            .get_mut(index)
+        self.get_mut(coord)
             .and_then(|cell| Some(mem::replace(cell, value)))
+    }
+
+    pub fn take(&mut self, coord: Coord) -> Option<T>
+    where
+        T: Default,
+    {
+        self.get_mut(coord).and_then(|cell| Some(mem::take(cell)))
+    }
+
+    pub fn copy(&mut self, src: Coord, dest: Coord)
+    where
+        T: Copy,
+    {
+        let src_index = self.coord_to_index(src);
+        let dest_index = self.coord_to_index(dest);
+        self.cells
+            .copy_within(src_index..(src_index + 1), dest_index)
+    }
+
+    /// Swaps the contents of two cells.
+    pub fn swap(&mut self, coord1: Coord, coord2: Coord) {
+        let index1 = self.coord_to_index(coord1);
+        let index2 = self.coord_to_index(coord2);
+        self.cells.swap(index1, index2);
+    }
+
+    /// Moves the contents of `src` into `dest`, returning the previous contents
+    /// of `dest`.
+    pub fn mov(&mut self, src: Coord, dest: Coord) -> Option<T>
+    where
+        T: Default,
+    {
+        // Make sure both coordinates are in bounds before mutating things.
+        if !(self.coord_in_bounds(src) && self.coord_in_bounds(dest)) {
+            return None;
+        }
+        let src_value = self.take(src).unwrap();
+        self.replace(dest, src_value)
     }
 
     pub fn offset_iter(&self, starting_point: Coord, offsets: &[Coord]) -> SelectionIter<T> {
         SelectionIter {
             grid: self,
-            coords: Self::offsets_to_coords(starting_point, offsets).into(),
+            coords: starting_point
+                .anchor_coords(offsets)
+                .collect::<VecDeque<Coord>>(),
         }
     }
 
@@ -77,20 +114,32 @@ impl<T> Grid<T> {
         }
     }
 
-    pub fn ortho_neighbor_coords(&self, coord: Coord) -> Vec<Coord> {
-        Self::offsets_to_coords(
-            coord,
-            &[Coord(1, 0), Coord(0, -1), Coord(-1, 0), Coord(0, 1)],
-        )
-    }
-
-    fn offsets_to_coords(coord: Coord, offsets: &[Coord]) -> Vec<Coord> {
-        offsets.iter().map(|&offset| coord + offset).collect()
-    }
-
     fn coord_to_index(&self, coord: Coord) -> usize {
         let offset_coord = coord - self.offset;
         (offset_coord.0 + offset_coord.1 * self.dimensions.0 as i32) as usize
+    }
+
+    fn max_x(&self) -> i32 {
+        self.dimensions.0 as i32 - self.offset.0
+    }
+
+    fn max_y(&self) -> i32 {
+        self.dimensions.1 as i32 - self.offset.1
+    }
+
+    fn min_x(&self) -> i32 {
+        self.offset.0
+    }
+
+    fn min_y(&self) -> i32 {
+        self.offset.1
+    }
+
+    fn coord_in_bounds(&self, coord: Coord) -> bool {
+        coord.0 < self.max_x()
+            && coord.0 >= self.min_x()
+            && coord.0 < self.max_y()
+            && coord.0 >= self.min_y()
     }
 }
 
@@ -142,14 +191,12 @@ impl<'a, T> Iterator for FloodIter<'a, T> {
                 continue;
             }
 
-            let neighbor_coords = self
-                .grid
-                .ortho_neighbor_coords(coord)
-                .iter()
+            let neighbor_coords = coord
+                .ortho_neighbor_coords()
                 .filter(|&coord| {
-                    !(self.searched_coords.contains(coord) || self.coords_to_search.contains(coord))
+                    !(self.searched_coords.contains(&coord)
+                        || self.coords_to_search.contains(&coord))
                 })
-                .map(|&coord| coord)
                 .collect::<Vec<Coord>>();
 
             self.coords_to_search.extend(neighbor_coords);
@@ -163,6 +210,21 @@ impl<'a, T> Iterator for FloodIter<'a, T> {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Coord(pub i32, pub i32);
+
+impl Coord {
+    /// Offsets the given `relative_coords` by `self`.
+    pub fn anchor_coords<'a>(
+        &'a self,
+        relative_coords: &'a [Coord],
+    ) -> impl Iterator<Item = Coord> + 'a {
+        relative_coords.iter().map(move |&coord| *self + coord)
+    }
+
+    /// Returns the orthogonal (Von Neumann) neighborhood of `self`.
+    pub fn ortho_neighbor_coords<'a>(&'a self) -> impl Iterator<Item = Coord> + 'a {
+        self.anchor_coords(&[Coord(1, 0), Coord(0, -1), Coord(-1, 0), Coord(0, 1)])
+    }
+}
 
 impl Add<Coord> for Coord {
     type Output = Coord;
