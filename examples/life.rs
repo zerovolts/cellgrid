@@ -1,6 +1,6 @@
 use rand;
 
-use autocell::{coord::Coord, grid::Grid};
+use autocell::{coord::Coord, grid::Grid, patterns};
 
 fn main() {
     let mut life_board = LifeBoard::random((16, 16));
@@ -41,7 +41,9 @@ impl LifeBoard {
     }
 
     fn live_neighbor_count(&self, coord: Coord) -> usize {
-        let neighbor_coords = coord.neighbor_coords().collect::<Vec<_>>();
+        let neighbor_coords = patterns::neighbor_coords()
+            .map(|offset| coord + offset)
+            .collect::<Vec<_>>();
         self.grid
             .selection_iter(&neighbor_coords)
             .filter(|cell| *cell.1 == LifeState::Alive)

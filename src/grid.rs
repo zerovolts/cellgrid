@@ -1,6 +1,6 @@
 use std::{collections::VecDeque, mem};
 
-use crate::coord::Coord;
+use crate::{coord::Coord, patterns};
 
 pub struct Grid<T> {
     // Row-major, linear storage of 2d grid cells.
@@ -113,8 +113,9 @@ impl<T> Grid<T> {
     pub fn offset_iter(&self, starting_point: Coord, offsets: &[Coord]) -> SelectionIter<T> {
         SelectionIter {
             grid: self,
-            coords: starting_point
-                .anchor_coords(offsets)
+            coords: offsets
+                .iter()
+                .map(|&offset| starting_point + offset)
                 .collect::<VecDeque<Coord>>(),
         }
     }
@@ -225,8 +226,8 @@ impl<'a, T> Iterator for FloodIter<'a, T> {
                 continue;
             }
 
-            let neighbor_coords = coord
-                .ortho_neighbor_coords()
+            let neighbor_coords = patterns::ortho_neighbor_coords()
+                .map(|offset| coord + offset)
                 .filter(|&coord| {
                     !(self.searched_coords.contains(&coord)
                         || self.coords_to_search.contains(&coord))
