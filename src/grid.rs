@@ -23,6 +23,26 @@ impl<T> Grid<T> {
         }
     }
 
+    pub fn with_generator(
+        dimensions: (u32, u32),
+        offset: (i32, i32),
+        generator: impl Fn(Coord) -> T,
+    ) -> Self {
+        let mut cells = Vec::with_capacity((dimensions.0 * dimensions.1) as usize);
+        // TODO: Implement an iterator over all grid cells.
+        for y in 0..(dimensions.1 as i32) {
+            for x in 0..(dimensions.0 as i32) {
+                let coord = Coord(x, y);
+                cells.push(generator(coord));
+            }
+        }
+        Self {
+            cells,
+            dimensions,
+            offset: Coord(offset.0, offset.1),
+        }
+    }
+
     pub fn get(&self, coord: Coord) -> Option<&T> {
         self.cells.get(self.coord_to_index(coord))
     }
@@ -81,6 +101,17 @@ impl<T> Grid<T> {
         self.replace(dest, src_value)
     }
 
+    pub fn iter<'a>(&'a self) -> impl Iterator<Item = (Coord, &'a T)> {
+        self.cells
+            .iter()
+            .enumerate()
+            .map(move |cell| (self.index_to_coord(cell.0), cell.1))
+    }
+
+    pub fn cell_iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
+        self.cells.iter_mut()
+    }
+
     pub fn offset_iter(&self, starting_point: Coord, offsets: &[Coord]) -> SelectionIter<T> {
         SelectionIter {
             grid: self,
@@ -119,6 +150,12 @@ impl<T> Grid<T> {
         (offset_coord.0 + offset_coord.1 * self.dimensions.0 as i32) as usize
     }
 
+    fn index_to_coord(&self, index: usize) -> Coord {
+        let y = (index as f32 / self.dimensions.1 as f32).floor() as i32;
+        let x = index as i32 - (y * self.dimensions.1 as i32) as i32;
+        Coord(x + self.offset.0, y + self.offset.1)
+    }
+
     fn max_x(&self) -> i32 {
         self.dimensions.0 as i32 - self.offset.0
     }
@@ -142,7 +179,6 @@ impl<T> Grid<T> {
             && coord.0 >= self.min_y()
     }
 }
-
 pub struct SelectionIter<'a, T> {
     grid: &'a Grid<T>,
     coords: VecDeque<Coord>,
@@ -220,9 +256,28 @@ impl Coord {
         relative_coords.iter().map(move |&coord| *self + coord)
     }
 
+    /// Returns the orthogonal and diagonal (Moore) neighborhood of `self`.
+    pub fn neighbor_coords<'a>(&'a self) -> impl Iterator<Item = Coord> + 'a {
+        self.anchor_coords(&[
+            Coord(0, 1),
+            Coord(1, 1),
+            Coord(1, 0),
+            Coord(1, -1),
+            Coord(0, -1),
+            Coord(-1, -1),
+            Coord(-1, 0),
+            Coord(-1, 1),
+        ])
+    }
+
     /// Returns the orthogonal (Von Neumann) neighborhood of `self`.
     pub fn ortho_neighbor_coords<'a>(&'a self) -> impl Iterator<Item = Coord> + 'a {
-        self.anchor_coords(&[Coord(1, 0), Coord(0, -1), Coord(-1, 0), Coord(0, 1)])
+        self.anchor_coords(&[Coord(0, 1), Coord(1, 0), Coord(0, -1), Coord(-1, 0)])
+    }
+
+    /// Returns the diagonal neighborhood of `self` (for completeness).
+    pub fn diag_neighbor_coords<'a>(&'a self) -> impl Iterator<Item = Coord> + 'a {
+        self.anchor_coords(&[Coord(1, 1), Coord(1, -1), Coord(-1, -1), Coord(-1, 1)])
     }
 }
 
