@@ -1,6 +1,6 @@
 use rand;
 
-use autocell::grid::{Coord, Grid};
+use autocell::{coord::Coord, grid::Grid};
 
 fn main() {
     let mut life_board = LifeBoard::random((16, 16));
