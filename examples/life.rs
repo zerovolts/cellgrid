@@ -19,9 +19,11 @@ struct LifeBoard {
 impl LifeBoard {
     fn random(dimensions: (u32, u32)) -> Self {
         Self {
-            grid: Grid::with_generator(dimensions, (0, 0), |_coord| match rand::random::<bool>() {
-                true => LifeState::Alive,
-                false => LifeState::Dead,
+            grid: Grid::with_generator(dimensions, (0, 0), |(_x, _y)| {
+                match rand::random::<bool>() {
+                    true => LifeState::Alive,
+                    false => LifeState::Dead,
+                }
             }),
         }
     }

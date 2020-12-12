@@ -12,34 +12,34 @@ pub struct Grid<T> {
 }
 
 impl<T> Grid<T> {
-    pub fn new(dimensions: (u32, u32), offset: (i32, i32)) -> Self
+    pub fn new<O: Into<Coord>>(dimensions: (u32, u32), offset: O) -> Self
     where
         T: Default + Clone,
     {
         Self {
             cells: vec![T::default(); (dimensions.0 * dimensions.1) as usize],
             dimensions,
-            offset: Coord(offset.0, offset.1),
+            offset: offset.into(),
         }
     }
 
-    pub fn with_generator(
+    pub fn with_generator<O: Into<Coord>, C: From<Coord>>(
         dimensions: (u32, u32),
-        offset: (i32, i32),
-        generator: impl Fn(Coord) -> T,
+        offset: O,
+        generator: impl Fn(C) -> T,
     ) -> Self {
         let mut cells = Vec::with_capacity((dimensions.0 * dimensions.1) as usize);
         // TODO: Implement an iterator over all grid cells.
         for y in 0..(dimensions.1 as i32) {
             for x in 0..(dimensions.0 as i32) {
                 let coord = Coord(x, y);
-                cells.push(generator(coord));
+                cells.push(generator(coord.into()));
             }
         }
         Self {
             cells,
             dimensions,
-            offset: Coord(offset.0, offset.1),
+            offset: offset.into(),
         }
     }
 
@@ -294,5 +294,17 @@ impl Sub<Coord> for Coord {
 
     fn sub(self, rhs: Coord) -> Self::Output {
         Coord(self.0 - rhs.0, self.1 - rhs.1)
+    }
+}
+
+impl From<(i32, i32)> for Coord {
+    fn from((x, y): (i32, i32)) -> Self {
+        Coord(x, y)
+    }
+}
+
+impl From<Coord> for (i32, i32) {
+    fn from(Coord(x, y): Coord) -> Self {
+        (x, y)
     }
 }
