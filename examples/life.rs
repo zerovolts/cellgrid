@@ -33,6 +33,7 @@ impl LifeBoard {
             .grid
             .iter()
             .map(|cell| self.live_neighbor_count(cell.0))
+            // `collect` to release the borrow on `self`.
             .collect::<Vec<_>>();
 
         for (cell, neighbor_count) in self.grid.cell_iter_mut().zip(neighbor_counts) {
@@ -41,12 +42,16 @@ impl LifeBoard {
     }
 
     fn live_neighbor_count(&self, coord: Coord) -> usize {
-        let neighbor_coords = patterns::neighbor_coords()
-            .map(|offset| coord + offset)
-            .collect::<Vec<_>>();
+        let neighbor_coords = patterns::neighbor_coords().map(|offset| coord + offset);
         self.grid
-            .selection_iter(&neighbor_coords)
-            .filter(|cell| *cell.1 == LifeState::Alive)
+            .selection_iter(neighbor_coords)
+            .filter(|r_cell| {
+                if let Ok(cell) = r_cell {
+                    *cell.1 == LifeState::Alive
+                } else {
+                    false
+                }
+            })
             .count()
     }
 

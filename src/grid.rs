@@ -1,4 +1,7 @@
-use std::{collections::VecDeque, mem};
+use std::{
+    collections::{HashSet, VecDeque},
+    mem,
+};
 
 use crate::{coord::Coord, patterns};
 
@@ -110,21 +113,21 @@ impl<T> Grid<T> {
         self.cells.iter_mut()
     }
 
-    pub fn offset_iter(&self, starting_point: Coord, offsets: &[Coord]) -> SelectionIter<T> {
-        SelectionIter {
-            grid: self,
-            coords: offsets
-                .iter()
-                .map(|&offset| starting_point + offset)
-                .collect::<VecDeque<Coord>>(),
-        }
+    pub fn selection_iter<I>(&self, coords: I) -> SelectionIter<T, I>
+    where
+        I: Iterator<Item = Coord>,
+    {
+        SelectionIter { grid: self, coords }
     }
 
-    pub fn selection_iter(&self, coords: &[Coord]) -> SelectionIter<T> {
-        let coords_vec: Vec<_> = coords.into();
-        SelectionIter {
+    pub fn selection_iter_mut<I>(&mut self, coords: I) -> SelectionIterMut<T, I>
+    where
+        I: Iterator<Item = Coord>,
+    {
+        SelectionIterMut {
             grid: self,
-            coords: coords_vec.into(),
+            coords,
+            visited_coords: HashSet::new(),
         }
     }
 
@@ -178,25 +181,71 @@ impl<T> Grid<T> {
             && coord.0 >= self.min_y()
     }
 }
-pub struct SelectionIter<'a, T> {
-    grid: &'a Grid<T>,
-    coords: VecDeque<Coord>,
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum GridError {
+    /// The coordinate has no cell associated with it, as it's out of the grid
+    /// bounds.
+    OutOfBounds(Coord),
+    /// The coordinate has previously been mutably borrowed from the iterator,
+    /// and doing so again would break safety guarantees.
+    AlreadyVisited(Coord),
 }
 
-impl<'a, T> Iterator for SelectionIter<'a, T> {
-    type Item = (Coord, &'a T);
+pub struct SelectionIter<'a, T, I> {
+    grid: &'a Grid<T>,
+    coords: I,
+}
+
+impl<'a, T, I> Iterator for SelectionIter<'a, T, I>
+where
+    I: Iterator<Item = Coord>,
+{
+    type Item = Result<(Coord, &'a T), GridError>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        // Loop in case some of the offsets are invalid
-        while self.coords.len() > 0 {
-            let coord = self.coords.pop_front().unwrap();
+        if let Some(coord) = self.coords.next() {
             if let Some(cell) = self.grid.get(coord) {
-                return Some((coord, cell));
-            } else {
-                continue;
+                return Some(Ok((coord, cell)));
             }
+            return Some(Err(GridError::OutOfBounds(coord)));
         }
+        None
+    }
+}
 
+pub struct SelectionIterMut<'a, T, I> {
+    grid: &'a mut Grid<T>,
+    coords: I,
+    visited_coords: HashSet<Coord>,
+}
+
+impl<'a, T, I> Iterator for SelectionIterMut<'a, T, I>
+where
+    I: Iterator<Item = Coord>,
+{
+    type Item = Result<(Coord, &'a mut T), GridError>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if let Some(coord) = self.coords.next() {
+            if self.visited_coords.contains(&coord) {
+                return Some(Err(GridError::AlreadyVisited(coord)));
+            }
+            if let Some(cell) = self.grid.get_mut(coord).map(|cell| cell as *mut T) {
+                // SAFETY: We guarantee that only one mut reference to a cell
+                // will be given out at a time by checking each against a list
+                // of visited cells and only returning those that havent already
+                // visited.
+                // This is likely not actually completely safe, given that I
+                // don't know which cases to look out for.
+                let opt_cell = unsafe { cell.as_mut() };
+                if let Some(cell) = opt_cell {
+                    self.visited_coords.insert(coord);
+                    return Some(Ok((coord, cell)));
+                }
+            }
+            return Some(Err(GridError::OutOfBounds(coord)));
+        }
         None
     }
 }
@@ -240,5 +289,35 @@ impl<'a, T> Iterator for FloodIter<'a, T> {
         }
 
         None
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn selection_iter_mut() {
+        let mut grid: Grid<bool> = Grid::new((4, 4), (0, 0));
+        // Set all neighbors of (2, 2) to `true`.
+        for res_cell in
+            grid.selection_iter_mut(patterns::neighbor_coords().map(|coord| coord + Coord(2, 2)))
+        {
+            *res_cell.unwrap().1 = true;
+        }
+        assert_eq!(grid.get(Coord(2, 2)), Some(&false)); // center
+        assert_eq!(grid.get(Coord(3, 2)), Some(&true)); // right
+        assert_eq!(grid.get(Coord(2, 1)), Some(&true)); // bottom
+        assert_eq!(grid.get(Coord(1, 2)), Some(&true)); // left
+        assert_eq!(grid.get(Coord(2, 3)), Some(&true)); // top
+    }
+
+    #[test]
+    fn selection_iter_mut_already_visited() {
+        let mut grid: Grid<bool> = Grid::new((4, 4), (0, 0));
+        let coords = [Coord(2, 2), Coord(2, 2)].iter().map(|&x| x);
+        let mut iter = grid.selection_iter_mut(coords);
+        assert!(iter.next().unwrap().is_ok());
+        assert!(iter.next().unwrap() == Err(GridError::AlreadyVisited(Coord(2, 2))));
     }
 }
