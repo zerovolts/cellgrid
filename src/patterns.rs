@@ -1,7 +1,10 @@
-//! Iterators over common [`Coord`] shapes and patterns.
+//! Iterators over common [`Coord`](crate::coord::Coord) shapes and patterns.
 //!
-//! The patterns have no dependencies on actual cell data. They are relative to
-//! the origin and should be anchored to a concrete Coord before use.
+//! These patterns have no dependencies on actual cell data. Their intended use
+//! is for ultimately passing into
+//! [`Grid::selection_iter`](crate::grid::Grid::selection_iter) or
+//! [`Grid::selection_iter_mut`](crate::grid::Grid::selection_iter_mut) to obtain
+//! actual cell values.
 
 use crate::coord::Coord;
 
@@ -35,7 +38,7 @@ pub fn diag_neighbor_coords<'a>() -> impl Iterator<Item = Coord> + 'a {
         .map(|&x| x)
 }
 
-// Bresenham's line algorithm
+/// Traces Bresenham's line algorithm between two [`Coord`](crate::coord::Coord)s.
 pub fn line(from: Coord, to: Coord) -> impl Iterator<Item = Coord> {
     let delta = to - from;
     let x_step = Coord(delta.0.signum(), 0);

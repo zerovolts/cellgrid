@@ -1,5 +1,6 @@
 use std::ops::{Add, Sub};
 
+/// The coordinate key to a specific [`Grid`](crate::grid::Grid) cell.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Coord(pub i32, pub i32);
 

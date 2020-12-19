@@ -5,8 +5,9 @@ use std::{
 
 use crate::{coord::Coord, patterns};
 
+/// The core type of this library. A 2D grid of cell type `T`.
 pub struct Grid<T> {
-    // Row-major, linear storage of 2d grid cells.
+    /// Row-major, linear storage of cell data.
     pub cells: Vec<T>,
     pub dimensions: (u32, u32),
     pub offset: Coord,
@@ -102,6 +103,7 @@ impl<T> Grid<T> {
         self.replace(dest, src_value)
     }
 
+    /// Returns an iterator over all cells in the grid.
     pub fn iter<'a>(&'a self) -> impl Iterator<Item = (Coord, &'a T)> {
         self.cells
             .iter()
@@ -113,6 +115,7 @@ impl<T> Grid<T> {
         self.cells.iter_mut()
     }
 
+    /// Returns an iterator over the cells specified by the coords iterator.
     pub fn selection_iter<I>(&self, coords: I) -> SelectionIter<T, I>
     where
         I: Iterator<Item = Coord>,
@@ -120,6 +123,13 @@ impl<T> Grid<T> {
         SelectionIter { grid: self, coords }
     }
 
+    /// Returns a mutable iterator over the cells specified by the coords
+    /// iterator.
+    ///
+    /// If there is an attempt to visit a given cell more than once (which would
+    /// create multiple simultaneous mutable references to the cell), a
+    /// [`GridError::AlreadyVisited`](GridError::AlreadyVisited) will be returned
+    /// in place of the cell contents.
     pub fn selection_iter_mut<I>(&mut self, coords: I) -> SelectionIterMut<T, I>
     where
         I: Iterator<Item = Coord>,
@@ -131,6 +141,16 @@ impl<T> Grid<T> {
         }
     }
 
+    /// Returns an iterator beginning from `starting_coord` and continuing
+    /// through all recursively adjacent coords that satisfy the `predicate`. In
+    /// other words, this iterates through the cells according to a flood fill
+    /// algorithm.
+    ///
+    /// Since there is no `mut` version of this iterator (which would require
+    /// simultaneous mutable and shared references to most of the cells), the
+    /// resulting iterator can be collected and then passed into
+    /// [`Grid::selection_iter_mut`](crate::grid::Grid::selection_iter_mut) to
+    /// gain access to mutable cell contents.
     pub fn flood_iter(
         &self,
         starting_coord: Coord,
