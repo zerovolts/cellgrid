@@ -1,4 +1,7 @@
-use std::ops::{Add, Sub};
+use std::{
+    fmt,
+    ops::{Add, Sub},
+};
 
 /// The coordinate key to a specific [`Grid`](crate::grid::Grid) cell.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -29,5 +32,11 @@ impl From<(i32, i32)> for Coord {
 impl From<Coord> for (i32, i32) {
     fn from(Coord(x, y): Coord) -> Self {
         (x, y)
+    }
+}
+
+impl fmt::Display for Coord {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "({}, {})", self.0, self.1)
     }
 }

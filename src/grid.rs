@@ -9,15 +9,23 @@ use crate::{coord::Coord, patterns};
 pub struct Grid<T> {
     /// Row-major, linear storage of cell data.
     pub cells: Vec<T>,
-    pub dimensions: (u32, u32),
+    /// XY dimensions of the grid. This uses a [`Coord`](crate::coord::Coord) for
+    /// consistency with the rest of the code and to reduce the amount of type
+    /// casting. Components must be greater than zero.
+    pub dimensions: Coord,
     pub offset: Coord,
 }
 
 impl<T> Grid<T> {
-    pub fn new<O: Into<Coord>>(dimensions: (u32, u32), offset: O) -> Self
+    pub fn new<C: Into<Coord>>(dimensions: C, offset: C) -> Self
     where
         T: Default + Clone,
     {
+        let dimensions = dimensions.into();
+        assert!(
+            dimensions.0 > 0 && dimensions.1 > 0,
+            format!("Grid dimensions must be positive: {}", dimensions)
+        );
         Self {
             cells: vec![T::default(); (dimensions.0 * dimensions.1) as usize],
             dimensions,
@@ -25,16 +33,21 @@ impl<T> Grid<T> {
         }
     }
 
-    pub fn with_generator<O: Into<Coord>, C: From<Coord>>(
-        dimensions: (u32, u32),
-        offset: O,
-        generator: impl Fn(C) -> T,
+    pub fn with_generator<C: Into<Coord>, Fc: From<Coord>>(
+        dimensions: C,
+        offset: C,
+        generator: impl Fn(Fc) -> T,
     ) -> Self {
+        let dimensions = dimensions.into();
+        assert!(
+            dimensions.0 > 0 && dimensions.1 > 0,
+            format!("Grid dimensions must be positive: {}", dimensions)
+        );
         let mut cells = Vec::with_capacity((dimensions.0 * dimensions.1) as usize);
         let offset = offset.into();
         // TODO: Implement an iterator over all grid cells.
-        for y in offset.1..(dimensions.1 as i32 + offset.1) {
-            for x in offset.0..(dimensions.0 as i32 + offset.0) {
+        for y in offset.1..(dimensions.1 + offset.1) {
+            for x in offset.0..(dimensions.0 + offset.0) {
                 let coord = Coord(x, y);
                 cells.push(generator(coord.into()));
             }
@@ -170,21 +183,21 @@ impl<T> Grid<T> {
 
     fn coord_to_index(&self, coord: Coord) -> usize {
         let offset_coord = coord - self.offset;
-        (offset_coord.0 + offset_coord.1 * self.dimensions.0 as i32) as usize
+        (offset_coord.0 + offset_coord.1 * self.dimensions.0) as usize
     }
 
     fn index_to_coord(&self, index: usize) -> Coord {
         let y = (index as f32 / self.dimensions.1 as f32).floor() as i32;
-        let x = index as i32 - (y * self.dimensions.1 as i32) as i32;
-        Coord(x + self.offset.0, y + self.offset.1)
+        let x = index as i32 - (y * self.dimensions.1) as i32;
+        Coord(x, y) + self.offset
     }
 
     fn max_x(&self) -> i32 {
-        self.dimensions.0 as i32 - self.offset.0
+        self.dimensions.0 - self.offset.0
     }
 
     fn max_y(&self) -> i32 {
-        self.dimensions.1 as i32 - self.offset.1
+        self.dimensions.1 - self.offset.1
     }
 
     fn min_x(&self) -> i32 {
@@ -319,8 +332,8 @@ where
     T: Copy,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        for y in self.offset.1..(self.dimensions.1 as i32 + self.offset.1) {
-            for x in self.offset.0..(self.dimensions.0 as i32 + self.offset.0) {
+        for y in self.offset.1..(self.dimensions.1 + self.offset.1) {
+            for x in self.offset.0..(self.dimensions.0 + self.offset.0) {
                 let coord = Coord(x, y);
                 let c: char = match self.get(coord) {
                     Some(cell) => char::from(*cell),
