@@ -1,4 +1,7 @@
-use rand;
+use rand::{
+    distributions::{Distribution, Standard},
+    Rng,
+};
 
 use autocell::{coord::Coord, grid::Grid, patterns};
 
@@ -18,12 +21,7 @@ struct LifeBoard {
 impl LifeBoard {
     fn random<C: Into<Coord>>(dimensions: C) -> Self {
         Self {
-            grid: Grid::with_generator(dimensions, (0, 0), |(_x, _y)| {
-                match rand::random::<bool>() {
-                    true => LifeState::Alive,
-                    false => LifeState::Dead,
-                }
-            }),
+            grid: Grid::with_generator(dimensions, (0, 0), |(_x, _y)| rand::random::<LifeState>()),
         }
     }
 
@@ -91,6 +89,16 @@ impl From<LifeState> for char {
         match ls {
             LifeState::Alive => 'O',
             LifeState::Dead => '∙',
+        }
+    }
+}
+
+// Allows us to randomly generate LifeState values.
+impl Distribution<LifeState> for Standard {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> LifeState {
+        match rng.gen_bool(0.3) {
+            true => LifeState::Alive,
+            false => LifeState::Dead,
         }
     }
 }
