@@ -1,6 +1,6 @@
 use std::{
     collections::{HashSet, VecDeque},
-    mem,
+    fmt, mem,
 };
 
 use crate::{coord::Coord, patterns};
@@ -31,9 +31,10 @@ impl<T> Grid<T> {
         generator: impl Fn(C) -> T,
     ) -> Self {
         let mut cells = Vec::with_capacity((dimensions.0 * dimensions.1) as usize);
+        let offset = offset.into();
         // TODO: Implement an iterator over all grid cells.
-        for y in 0..(dimensions.1 as i32) {
-            for x in 0..(dimensions.0 as i32) {
+        for y in offset.1..(dimensions.1 as i32 + offset.1) {
+            for x in offset.0..(dimensions.0 as i32 + offset.0) {
                 let coord = Coord(x, y);
                 cells.push(generator(coord.into()));
             }
@@ -41,7 +42,7 @@ impl<T> Grid<T> {
         Self {
             cells,
             dimensions,
-            offset: offset.into(),
+            offset,
         }
     }
 
@@ -309,6 +310,31 @@ impl<'a, T> Iterator for FloodIter<'a, T> {
         }
 
         None
+    }
+}
+
+impl<T> fmt::Display for Grid<T>
+where
+    char: From<T>,
+    T: Copy,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        for y in self.offset.1..(self.dimensions.1 as i32 + self.offset.1) {
+            for x in self.offset.0..(self.dimensions.0 as i32 + self.offset.0) {
+                let coord = Coord(x, y);
+                let c: char = match self.get(coord) {
+                    Some(cell) => char::from(*cell),
+                    None => '�',
+                };
+                if let Err(e) = write!(f, "{} ", c) {
+                    return Err(e);
+                }
+            }
+            if let Err(e) = write!(f, "\n") {
+                return Err(e);
+            }
+        }
+        Ok(())
     }
 }
 

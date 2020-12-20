@@ -6,8 +6,7 @@ fn main() {
     let mut life_board = LifeBoard::random((16, 16));
 
     for _i in 0..10 {
-        life_board.print();
-        println!();
+        println!("{}", life_board.grid);
         life_board.step();
     }
 }
@@ -73,24 +72,6 @@ impl LifeBoard {
             }
         }
     }
-
-    // TODO: Clean this up and make it into a trait for Grid.
-    fn print(&self) {
-        for y in 0..(self.grid.dimensions.1 as i32) {
-            for x in 0..(self.grid.dimensions.0 as i32) {
-                let coord = Coord(x, y);
-                print!(
-                    "{} ",
-                    match self.grid.get(coord) {
-                        Some(LifeState::Alive) => 'O',
-                        Some(LifeState::Dead) => '∙',
-                        None => '?',
-                    }
-                );
-            }
-            println!();
-        }
-    }
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
@@ -102,5 +83,14 @@ enum LifeState {
 impl Default for LifeState {
     fn default() -> Self {
         LifeState::Dead
+    }
+}
+
+impl From<LifeState> for char {
+    fn from(ls: LifeState) -> char {
+        match ls {
+            LifeState::Alive => 'O',
+            LifeState::Dead => '∙',
+        }
     }
 }
