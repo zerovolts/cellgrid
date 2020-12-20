@@ -16,7 +16,7 @@ struct LifeBoard {
 }
 
 impl LifeBoard {
-    fn random(dimensions: (i32, i32)) -> Self {
+    fn random<C: Into<Coord>>(dimensions: C) -> Self {
         Self {
             grid: Grid::with_generator(dimensions, (0, 0), |(_x, _y)| {
                 match rand::random::<bool>() {

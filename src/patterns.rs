@@ -11,39 +11,37 @@ use crate::coord::Coord;
 /// Returns the orthogonal and diagonal (Moore) neighborhood of `self`.
 pub fn neighbor_coords<'a>() -> impl Iterator<Item = Coord> + 'a {
     [
-        Coord(0, 1),
-        Coord(1, 1),
-        Coord(1, 0),
-        Coord(1, -1),
-        Coord(0, -1),
-        Coord(-1, -1),
-        Coord(-1, 0),
-        Coord(-1, 1),
+        (0, 1),
+        (1, 1),
+        (1, 0),
+        (1, -1),
+        (0, -1),
+        (-1, -1),
+        (-1, 0),
+        (-1, 1),
     ]
     .iter()
-    .map(|&x| x)
+    .map(|&x| x.into())
 }
 
 /// Returns the orthogonal (Von Neumann) neighborhood of `self`.
 pub fn ortho_neighbor_coords<'a>() -> impl Iterator<Item = Coord> + 'a {
-    [Coord(0, 1), Coord(1, 0), Coord(0, -1), Coord(-1, 0)]
-        .iter()
-        .map(|&x| x)
+    [(0, 1), (1, 0), (0, -1), (-1, 0)].iter().map(|&x| x.into())
 }
 
 /// Returns the diagonal neighborhood of `self` (for completeness).
 pub fn diag_neighbor_coords<'a>() -> impl Iterator<Item = Coord> + 'a {
-    [Coord(1, 1), Coord(1, -1), Coord(-1, -1), Coord(-1, 1)]
+    [(1, 1), (1, -1), (-1, -1), (-1, 1)]
         .iter()
-        .map(|&x| x)
+        .map(|&x| x.into())
 }
 
 /// Traces Bresenham's line algorithm between two [`Coord`](crate::coord::Coord)s.
 pub fn line(from: Coord, to: Coord) -> impl Iterator<Item = Coord> {
     let delta = to - from;
-    let x_step = Coord(delta.0.signum(), 0);
-    let y_step = Coord(0, delta.1.signum());
-    let x_is_major = delta.0.abs() > delta.1.abs();
+    let x_step = Coord::new(delta.x.signum(), 0);
+    let y_step = Coord::new(0, delta.y.signum());
+    let x_is_major = delta.x.abs() > delta.y.abs();
 
     let (major_step, minor_step) = if x_is_major {
         (x_step, y_step)
@@ -52,9 +50,9 @@ pub fn line(from: Coord, to: Coord) -> impl Iterator<Item = Coord> {
     };
 
     let (major_fault, minor_fault) = if x_is_major {
-        (delta.0.abs(), delta.1.abs())
+        (delta.x.abs(), delta.y.abs())
     } else {
-        (delta.1.abs(), delta.0.abs())
+        (delta.y.abs(), delta.x.abs())
     };
 
     LineIter {

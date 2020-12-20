@@ -17,38 +17,41 @@ pub struct Grid<T> {
 }
 
 impl<T> Grid<T> {
-    pub fn new<C: Into<Coord>>(dimensions: C, offset: C) -> Self
+    pub fn new<D, O>(dimensions: D, offset: O) -> Self
     where
         T: Default + Clone,
+        D: Into<Coord>,
+        O: Into<Coord>,
     {
         let dimensions = dimensions.into();
         assert!(
-            dimensions.0 > 0 && dimensions.1 > 0,
+            dimensions.x > 0 && dimensions.y > 0,
             format!("Grid dimensions must be positive: {}", dimensions)
         );
         Self {
-            cells: vec![T::default(); (dimensions.0 * dimensions.1) as usize],
+            cells: vec![T::default(); (dimensions.x * dimensions.y) as usize],
             dimensions,
             offset: offset.into(),
         }
     }
 
-    pub fn with_generator<C: Into<Coord>, Fc: From<Coord>>(
-        dimensions: C,
-        offset: C,
-        generator: impl Fn(Fc) -> T,
-    ) -> Self {
+    pub fn with_generator<D, O, C>(dimensions: D, offset: O, generator: impl Fn(C) -> T) -> Self
+    where
+        D: Into<Coord>,
+        O: Into<Coord>,
+        C: From<Coord>,
+    {
         let dimensions = dimensions.into();
         assert!(
-            dimensions.0 > 0 && dimensions.1 > 0,
+            dimensions.x > 0 && dimensions.y > 0,
             format!("Grid dimensions must be positive: {}", dimensions)
         );
-        let mut cells = Vec::with_capacity((dimensions.0 * dimensions.1) as usize);
         let offset = offset.into();
+        let mut cells = Vec::with_capacity((dimensions.x * dimensions.y) as usize);
         // TODO: Implement an iterator over all grid cells.
-        for y in offset.1..(dimensions.1 + offset.1) {
-            for x in offset.0..(dimensions.0 + offset.0) {
-                let coord = Coord(x, y);
+        for y in offset.y..(dimensions.y + offset.y) {
+            for x in offset.x..(dimensions.x + offset.x) {
+                let coord = Coord::new(x, y);
                 cells.push(generator(coord.into()));
             }
         }
@@ -183,36 +186,36 @@ impl<T> Grid<T> {
 
     fn coord_to_index(&self, coord: Coord) -> usize {
         let offset_coord = coord - self.offset;
-        (offset_coord.0 + offset_coord.1 * self.dimensions.0) as usize
+        (offset_coord.x + offset_coord.y * self.dimensions.x) as usize
     }
 
     fn index_to_coord(&self, index: usize) -> Coord {
-        let y = (index as f32 / self.dimensions.1 as f32).floor() as i32;
-        let x = index as i32 - (y * self.dimensions.1) as i32;
-        Coord(x, y) + self.offset
+        let y = (index as f32 / self.dimensions.y as f32).floor() as i32;
+        let x = index as i32 - (y * self.dimensions.y) as i32;
+        Coord::new(x, y) + self.offset
     }
 
     fn max_x(&self) -> i32 {
-        self.dimensions.0 - self.offset.0
+        self.dimensions.x - self.offset.x
     }
 
     fn max_y(&self) -> i32 {
-        self.dimensions.1 - self.offset.1
+        self.dimensions.y - self.offset.y
     }
 
     fn min_x(&self) -> i32 {
-        self.offset.0
+        self.offset.x
     }
 
     fn min_y(&self) -> i32 {
-        self.offset.1
+        self.offset.y
     }
 
     fn coord_in_bounds(&self, coord: Coord) -> bool {
-        coord.0 < self.max_x()
-            && coord.0 >= self.min_x()
-            && coord.0 < self.max_y()
-            && coord.0 >= self.min_y()
+        coord.x < self.max_x()
+            && coord.x >= self.min_x()
+            && coord.y < self.max_y()
+            && coord.y >= self.min_y()
     }
 }
 
@@ -332,9 +335,9 @@ where
     T: Copy,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        for y in self.offset.1..(self.dimensions.1 + self.offset.1) {
-            for x in self.offset.0..(self.dimensions.0 + self.offset.0) {
-                let coord = Coord(x, y);
+        for y in self.offset.y..(self.dimensions.y + self.offset.y) {
+            for x in self.offset.x..(self.dimensions.x + self.offset.x) {
+                let coord = Coord::new(x, y);
                 let c: char = match self.get(coord) {
                     Some(cell) => char::from(*cell),
                     None => '�',
@@ -359,24 +362,24 @@ mod tests {
     fn selection_iter_mut() {
         let mut grid: Grid<bool> = Grid::new((4, 4), (0, 0));
         // Set all neighbors of (2, 2) to `true`.
-        for res_cell in
-            grid.selection_iter_mut(patterns::neighbor_coords().map(|coord| coord + Coord(2, 2)))
+        for res_cell in grid
+            .selection_iter_mut(patterns::neighbor_coords().map(|coord| coord + Coord::new(2, 2)))
         {
             *res_cell.unwrap().1 = true;
         }
-        assert_eq!(grid.get(Coord(2, 2)), Some(&false)); // center
-        assert_eq!(grid.get(Coord(3, 2)), Some(&true)); // right
-        assert_eq!(grid.get(Coord(2, 1)), Some(&true)); // bottom
-        assert_eq!(grid.get(Coord(1, 2)), Some(&true)); // left
-        assert_eq!(grid.get(Coord(2, 3)), Some(&true)); // top
+        assert_eq!(grid.get(Coord::new(2, 2)), Some(&false)); // center
+        assert_eq!(grid.get(Coord::new(3, 2)), Some(&true)); // right
+        assert_eq!(grid.get(Coord::new(2, 1)), Some(&true)); // bottom
+        assert_eq!(grid.get(Coord::new(1, 2)), Some(&true)); // left
+        assert_eq!(grid.get(Coord::new(2, 3)), Some(&true)); // top
     }
 
     #[test]
     fn selection_iter_mut_already_visited() {
         let mut grid: Grid<bool> = Grid::new((4, 4), (0, 0));
-        let coords = [Coord(2, 2), Coord(2, 2)].iter().map(|&x| x);
+        let coords = [(2, 2), (2, 2)].iter().map(|&x| x.into());
         let mut iter = grid.selection_iter_mut(coords);
         assert!(iter.next().unwrap().is_ok());
-        assert!(iter.next().unwrap() == Err(GridError::AlreadyVisited(Coord(2, 2))));
+        assert!(iter.next().unwrap() == Err(GridError::AlreadyVisited(Coord::new(2, 2))));
     }
 }
