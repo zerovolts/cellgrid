@@ -317,6 +317,7 @@ impl<'a, T> Iterator for FloodIter<'a, T> {
                 .filter(|&coord| {
                     !(self.searched_coords.contains(&coord)
                         || self.coords_to_search.contains(&coord))
+                        && self.grid.coord_in_bounds(coord)
                 })
                 .collect::<Vec<Coord>>();
 
