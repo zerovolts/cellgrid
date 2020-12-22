@@ -8,8 +8,9 @@
 
 use crate::coord::Coord;
 
-/// Returns the orthogonal and diagonal (Moore) neighborhood of `self`.
-pub fn neighbor_coords<'a>() -> impl Iterator<Item = Coord> + 'a {
+/// Returns the orthogonal and diagonal (Moore) neighborhood of `coord`.
+pub fn neighborhood<'a, C: Into<Coord>>(coord: C) -> impl Iterator<Item = Coord> + 'a {
+    let coord = coord.into();
     [
         (0, 1),
         (1, 1),
@@ -21,22 +22,26 @@ pub fn neighbor_coords<'a>() -> impl Iterator<Item = Coord> + 'a {
         (-1, 1),
     ]
     .iter()
-    .map(|&x| x.into())
+    .map(move |&offset| coord + offset.into())
 }
 
-/// Returns the orthogonal (Von Neumann) neighborhood of `self`.
-pub fn ortho_neighbor_coords<'a>() -> impl Iterator<Item = Coord> + 'a {
-    [(0, 1), (1, 0), (0, -1), (-1, 0)].iter().map(|&x| x.into())
+/// Returns the orthogonal (Von Neumann) neighborhood of `coord`.
+pub fn ortho_neighborhood<'a, C: Into<Coord>>(coord: C) -> impl Iterator<Item = Coord> + 'a {
+    let coord = coord.into();
+    [(0, 1), (1, 0), (0, -1), (-1, 0)]
+        .iter()
+        .map(move |&offset| coord + offset.into())
 }
 
-/// Returns the diagonal neighborhood of `self` (for completeness).
-pub fn diag_neighbor_coords<'a>() -> impl Iterator<Item = Coord> + 'a {
+/// Returns the diagonal neighborhood of `coord` (for completeness).
+pub fn diag_neighborhood<'a, C: Into<Coord>>(coord: C) -> impl Iterator<Item = Coord> + 'a {
+    let coord = coord.into();
     [(1, 1), (1, -1), (-1, -1), (-1, 1)]
         .iter()
-        .map(|&x| x.into())
+        .map(move |&offset| coord + offset.into())
 }
 
-/// Traces Bresenham's line algorithm between two [`Coord`](crate::coord::Coord)s.
+/// Traces Bresenham's line algorithm between `from` and `to`.
 pub fn line(from: Coord, to: Coord) -> impl Iterator<Item = Coord> {
     let delta = to - from;
     let x_step = Coord::new(delta.x.signum(), 0);
@@ -101,7 +106,10 @@ impl Iterator for LineIter {
         self.next_coord = self.next_coord + self.major_step;
 
         self.fault -= self.minor_fault as f32;
-        // < vs <= here?
+        // The choice of < over <= here seems arbitrary. The step patterns they
+        // produce are mirror images of each other, for example:
+        //  < 0.0 -- 3-4-4-5-4-3
+        // <= 0.0 -- 3-4-5-4-4-3
         if self.fault < 0.0 {
             self.fault += self.major_fault as f32;
             // TODO: AddAssign

@@ -312,8 +312,7 @@ impl<'a, T> Iterator for FloodIter<'a, T> {
                 continue;
             }
 
-            let neighbor_coords = patterns::ortho_neighbor_coords()
-                .map(|offset| coord + offset)
+            let neighbor_coords = patterns::ortho_neighborhood(coord)
                 .filter(|&coord| {
                     !(self.searched_coords.contains(&coord)
                         || self.coords_to_search.contains(&coord))
@@ -363,9 +362,7 @@ mod tests {
     fn selection_iter_mut() {
         let mut grid: Grid<bool> = Grid::new((4, 4), (0, 0));
         // Set all neighbors of (2, 2) to `true`.
-        for res_cell in grid
-            .selection_iter_mut(patterns::neighbor_coords().map(|coord| coord + Coord::new(2, 2)))
-        {
+        for res_cell in grid.selection_iter_mut(patterns::neighborhood((2, 2))) {
             *res_cell.unwrap().1 = true;
         }
         assert_eq!(grid.get(Coord::new(2, 2)), Some(&false)); // center

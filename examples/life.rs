@@ -39,9 +39,8 @@ impl LifeBoard {
     }
 
     fn live_neighbor_count(&self, coord: Coord) -> usize {
-        let neighbor_coords = patterns::neighbor_coords().map(|offset| coord + offset);
         self.grid
-            .selection_iter(neighbor_coords)
+            .selection_iter(patterns::neighborhood(coord))
             .filter(|r_cell| {
                 if let Ok(cell) = r_cell {
                     *cell.1 == LifeState::Alive
