@@ -1,6 +1,6 @@
 use std::{
     fmt,
-    ops::{Add, Sub},
+    ops::{Add, AddAssign, Sub, SubAssign},
 };
 
 /// The coordinate key to a specific [`Grid`](crate::grid::Grid) cell.
@@ -24,11 +24,25 @@ impl Add<Coord> for Coord {
     }
 }
 
+impl AddAssign<Coord> for Coord {
+    fn add_assign(&mut self, rhs: Coord) {
+        self.x += rhs.x;
+        self.y += rhs.y;
+    }
+}
+
 impl Sub<Coord> for Coord {
     type Output = Coord;
 
     fn sub(self, rhs: Coord) -> Self::Output {
         Coord::new(self.x - rhs.x, self.y - rhs.y)
+    }
+}
+
+impl SubAssign<Coord> for Coord {
+    fn sub_assign(&mut self, rhs: Coord) {
+        self.x -= rhs.x;
+        self.y -= rhs.y;
     }
 }
 
