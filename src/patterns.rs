@@ -102,8 +102,7 @@ impl Iterator for LineIter {
         // We return the coordinate computed on the previous iteration
         let return_coord = self.next_coord;
 
-        // TODO: AddAssign
-        self.next_coord = self.next_coord + self.major_step;
+        self.next_coord += self.major_step;
 
         self.fault -= self.minor_fault as f32;
         // The choice of < over <= here seems arbitrary. The step patterns they
@@ -112,8 +111,7 @@ impl Iterator for LineIter {
         // <= 0.0 -- 3-4-5-4-4-3
         if self.fault < 0.0 {
             self.fault += self.major_fault as f32;
-            // TODO: AddAssign
-            self.next_coord = self.next_coord + self.minor_step;
+            self.next_coord += self.minor_step;
         }
 
         Some(return_coord)
