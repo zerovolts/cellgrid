@@ -1,5 +1,6 @@
 use crate::coord::Coord;
 
+#[derive(Clone, Copy)]
 pub struct Rect {
     pub top: i32,
     pub bottom: i32,
@@ -8,27 +9,30 @@ pub struct Rect {
 }
 
 impl Rect {
+    pub fn with_corners(corner1: Coord, corner2: Coord) -> Self {
+        Self {
+            top: corner1.y.max(corner2.y),
+            bottom: corner1.y.min(corner2.y),
+            left: corner1.x.min(corner2.x),
+            right: corner1.x.max(corner2.x),
+        }
+    }
+
     pub fn contains(&self, coord: Coord) -> bool {
         coord.x >= self.left
             && coord.x <= self.right
             && coord.y >= self.bottom
             && coord.y <= self.top
     }
-}
 
-pub fn rect(from_corner: Coord, to_corner: Coord) -> impl Iterator<Item = Coord> {
-    let rect = Rect {
-        top: from_corner.y.max(to_corner.y),
-        bottom: from_corner.y.min(to_corner.y),
-        left: from_corner.x.min(to_corner.x),
-        right: from_corner.x.max(to_corner.x),
-    };
-    let next_coord = Coord::new(rect.left, rect.bottom);
+    pub fn iter(&self) -> impl Iterator<Item = Coord> {
+        let next_coord = Coord::new(self.left, self.bottom);
 
-    RectIter {
-        rect,
-        next_coord,
-        is_finished: false,
+        RectIter {
+            rect: *self,
+            next_coord,
+            is_finished: false,
+        }
     }
 }
 
@@ -70,19 +74,20 @@ mod tests {
 
     #[test]
     fn single_coord_rect_iter() {
-        let coord_count = rect(Coord::new(0, 0), Coord::new(0, 0)).count();
-        assert_eq!(coord_count, 1);
+        let rect = Rect::with_corners(Coord::new(0, 0), Coord::new(0, 0));
+        assert_eq!(rect.iter().count(), 1);
     }
 
     #[test]
     fn multi_coord_rect_iter() {
-        let coord_count = rect(Coord::new(0, 0), Coord::new(3, 3)).count();
-        assert_eq!(coord_count, 16);
+        let rect = Rect::with_corners(Coord::new(0, 0), Coord::new(3, 3));
+        assert_eq!(rect.iter().count(), 16);
     }
 
     #[test]
     fn reversed_coord_rect_iter() {
-        let coords = rect(Coord::new(2, 2), Coord::new(-2, -2)).collect::<Vec<_>>();
+        let rect = Rect::with_corners(Coord::new(2, 2), Coord::new(-2, -2));
+        let coords = rect.iter().collect::<Vec<_>>();
         assert_eq!(coords.first(), Some(&Coord::new(-2, -2)));
         assert_eq!(coords.last(), Some(&Coord::new(2, 2)));
     }
