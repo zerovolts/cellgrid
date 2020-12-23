@@ -5,7 +5,7 @@ use std::{
 
 use crate::{
     coord::Coord,
-    patterns::{self, RectBounds},
+    patterns::{self, Rect},
 };
 
 /// The core type of this library. A 2D grid of cell type `T`.
@@ -212,8 +212,8 @@ impl<T> Grid<T> {
         Coord::new(x, y) + self.offset
     }
 
-    fn bounds(&self) -> RectBounds {
-        RectBounds {
+    fn bounds(&self) -> Rect {
+        Rect {
             top: self.dimensions.y - self.offset.y - 1,
             bottom: self.offset.y,
             left: self.offset.x,

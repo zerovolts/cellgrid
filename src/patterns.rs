@@ -44,29 +44,29 @@ pub fn diag_neighborhood<'a, C: Into<Coord>>(coord: C) -> impl Iterator<Item = C
 }
 
 pub fn rect(from_corner: Coord, to_corner: Coord) -> impl Iterator<Item = Coord> {
-    let bounds = RectBounds {
+    let rect = Rect {
         top: from_corner.y.max(to_corner.y),
         bottom: from_corner.y.min(to_corner.y),
         left: from_corner.x.min(to_corner.x),
         right: from_corner.x.max(to_corner.x),
     };
-    let next_coord = Coord::new(bounds.left, bounds.bottom);
+    let next_coord = Coord::new(rect.left, rect.bottom);
 
     RectIter {
-        bounds,
+        rect,
         next_coord,
         is_finished: false,
     }
 }
 
-pub struct RectBounds {
+pub struct Rect {
     pub top: i32,
     pub bottom: i32,
     pub left: i32,
     pub right: i32,
 }
 
-impl RectBounds {
+impl Rect {
     pub fn contains(&self, coord: Coord) -> bool {
         coord.x >= self.left
             && coord.x <= self.right
@@ -77,7 +77,7 @@ impl RectBounds {
 
 /// Iterates row by row from the bottom-left corner to the top-right corner.
 struct RectIter {
-    bounds: RectBounds,
+    rect: Rect,
     next_coord: Coord,
     is_finished: bool,
 }
@@ -93,10 +93,10 @@ impl Iterator for RectIter {
         // We return the coordinate computed on the previous iteration.
         let next_coord = self.next_coord;
 
-        if self.next_coord.x < self.bounds.right {
+        if self.next_coord.x < self.rect.right {
             self.next_coord.x += 1;
-        } else if self.next_coord.y < self.bounds.top {
-            self.next_coord.x = self.bounds.left;
+        } else if self.next_coord.y < self.rect.top {
+            self.next_coord.x = self.rect.left;
             self.next_coord.y += 1;
         } else {
             // We've passed the last element.
