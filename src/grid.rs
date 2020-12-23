@@ -3,7 +3,10 @@ use std::{
     fmt, mem,
 };
 
-use crate::{coord::Coord, patterns};
+use crate::{
+    coord::Coord,
+    patterns::{self, RectBounds},
+};
 
 /// The core type of this library. A 2D grid of cell type `T`.
 pub struct Grid<T> {
@@ -63,17 +66,20 @@ impl<T> Grid<T> {
     }
 
     pub fn get(&self, coord: Coord) -> Option<&T> {
-        self.cells.get(self.coord_to_index(coord))
+        self.cells.get(self.coord_to_index(coord)?)
     }
 
     pub fn get_mut(&mut self, coord: Coord) -> Option<&mut T> {
-        let index = self.coord_to_index(coord);
+        let index = self.coord_to_index(coord)?;
         self.cells.get_mut(index)
     }
 
-    pub fn set(&mut self, coord: Coord, value: T) {
+    pub fn set(&mut self, coord: Coord, value: T) -> bool {
         if let Some(cell) = self.get_mut(coord) {
             *cell = value;
+            true
+        } else {
+            false
         }
     }
 
@@ -89,21 +95,29 @@ impl<T> Grid<T> {
         self.get_mut(coord).and_then(|cell| Some(mem::take(cell)))
     }
 
-    pub fn copy(&mut self, src: Coord, dest: Coord)
+    pub fn copy(&mut self, src: Coord, dest: Coord) -> bool
     where
         T: Copy,
     {
-        let src_index = self.coord_to_index(src);
-        let dest_index = self.coord_to_index(dest);
-        self.cells
-            .copy_within(src_index..(src_index + 1), dest_index)
+        if let Some(src_index) = self.coord_to_index(src) {
+            if let Some(dest_index) = self.coord_to_index(dest) {
+                self.cells
+                    .copy_within(src_index..(src_index + 1), dest_index);
+                return true;
+            }
+        }
+        false
     }
 
     /// Swaps the contents of two cells.
-    pub fn swap(&mut self, coord1: Coord, coord2: Coord) {
-        let index1 = self.coord_to_index(coord1);
-        let index2 = self.coord_to_index(coord2);
-        self.cells.swap(index1, index2);
+    pub fn swap(&mut self, coord1: Coord, coord2: Coord) -> bool {
+        if let Some(index1) = self.coord_to_index(coord1) {
+            if let Some(index2) = self.coord_to_index(coord2) {
+                self.cells.swap(index1, index2);
+                return true;
+            }
+        }
+        false
     }
 
     /// Moves the contents of `src` into `dest`, returning the previous contents
@@ -184,9 +198,12 @@ impl<T> Grid<T> {
         }
     }
 
-    fn coord_to_index(&self, coord: Coord) -> usize {
+    fn coord_to_index(&self, coord: Coord) -> Option<usize> {
+        if !self.coord_in_bounds(coord) {
+            return None;
+        }
         let offset_coord = coord - self.offset;
-        (offset_coord.x + offset_coord.y * self.dimensions.x) as usize
+        Some((offset_coord.x + offset_coord.y * self.dimensions.x) as usize)
     }
 
     fn index_to_coord(&self, index: usize) -> Coord {
@@ -195,27 +212,17 @@ impl<T> Grid<T> {
         Coord::new(x, y) + self.offset
     }
 
-    fn max_x(&self) -> i32 {
-        self.dimensions.x - self.offset.x
-    }
-
-    fn max_y(&self) -> i32 {
-        self.dimensions.y - self.offset.y
-    }
-
-    fn min_x(&self) -> i32 {
-        self.offset.x
-    }
-
-    fn min_y(&self) -> i32 {
-        self.offset.y
+    fn bounds(&self) -> RectBounds {
+        RectBounds {
+            top: self.dimensions.y - self.offset.y - 1,
+            bottom: self.offset.y,
+            left: self.offset.x,
+            right: self.dimensions.x - self.offset.x - 1,
+        }
     }
 
     fn coord_in_bounds(&self, coord: Coord) -> bool {
-        coord.x < self.max_x()
-            && coord.x >= self.min_x()
-            && coord.y < self.max_y()
-            && coord.y >= self.min_y()
+        self.bounds().contains(coord)
     }
 }
 
@@ -357,6 +364,13 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn out_of_bounds_coords() {
+        let grid = Grid::<()>::new((8, 8), (0, 0));
+        // This would pass `coord_to_index` if there was no bounds check.
+        assert_eq!(grid.get(Coord::new(-1, 4)), None);
+    }
 
     #[test]
     fn selection_iter_mut() {

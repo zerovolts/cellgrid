@@ -59,11 +59,20 @@ pub fn rect(from_corner: Coord, to_corner: Coord) -> impl Iterator<Item = Coord>
     }
 }
 
-struct RectBounds {
-    top: i32,
-    bottom: i32,
-    left: i32,
-    right: i32,
+pub struct RectBounds {
+    pub top: i32,
+    pub bottom: i32,
+    pub left: i32,
+    pub right: i32,
+}
+
+impl RectBounds {
+    pub fn contains(&self, coord: Coord) -> bool {
+        coord.x >= self.left
+            && coord.x <= self.right
+            && coord.y >= self.bottom
+            && coord.y <= self.top
+    }
 }
 
 /// Iterates row by row from the bottom-left corner to the top-right corner.
