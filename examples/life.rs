@@ -3,7 +3,7 @@ use rand::{
     Rng,
 };
 
-use autocell::{coord::Coord, grid::Grid, patterns};
+use autocell::{coord::Coord, grid::Grid, patterns, rect::Rect};
 
 fn main() {
     let mut life_board = LifeBoard::random((16, 16));
@@ -20,8 +20,11 @@ struct LifeBoard {
 
 impl LifeBoard {
     fn random<C: Into<Coord>>(dimensions: C) -> Self {
+        let dimensions = dimensions.into();
         Self {
-            grid: Grid::with_generator(dimensions, (0, 0), |(_x, _y)| rand::random::<LifeState>()),
+            grid: Grid::with_generator(Rect::with_corners((0, 0), dimensions), |(_x, _y)| {
+                rand::random::<LifeState>()
+            }),
         }
     }
 

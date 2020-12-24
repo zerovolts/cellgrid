@@ -9,57 +9,33 @@ use crate::{coord::Coord, patterns, rect::Rect};
 pub struct Grid<T> {
     /// Row-major, linear storage of cell data.
     pub cells: Vec<T>,
-    /// XY dimensions of the grid. This uses a [`Coord`](crate::coord::Coord) for
-    /// consistency with the rest of the code and to reduce the amount of type
-    /// casting. Components must be greater than zero.
-    pub dimensions: Coord,
-    pub offset: Coord,
+    pub bounds: Rect,
 }
 
 impl<T> Grid<T> {
-    pub fn new<D, O>(dimensions: D, offset: O) -> Self
+    pub fn new(bounds: Rect) -> Self
     where
         T: Default + Clone,
-        D: Into<Coord>,
-        O: Into<Coord>,
     {
-        let dimensions = dimensions.into();
-        assert!(
-            dimensions.x > 0 && dimensions.y > 0,
-            format!("Grid dimensions must be positive: {}", dimensions)
-        );
         Self {
-            cells: vec![T::default(); (dimensions.x * dimensions.y) as usize],
-            dimensions,
-            offset: offset.into(),
+            cells: vec![T::default(); bounds.area() as usize],
+            bounds,
         }
     }
 
-    pub fn with_generator<D, O, C>(dimensions: D, offset: O, generator: impl Fn(C) -> T) -> Self
+    pub fn with_generator<C>(bounds: Rect, generator: impl Fn(C) -> T) -> Self
     where
-        D: Into<Coord>,
-        O: Into<Coord>,
         C: From<Coord>,
     {
-        let dimensions = dimensions.into();
-        assert!(
-            dimensions.x > 0 && dimensions.y > 0,
-            format!("Grid dimensions must be positive: {}", dimensions)
-        );
-        let offset = offset.into();
-        let mut cells = Vec::with_capacity((dimensions.x * dimensions.y) as usize);
+        let mut cells = Vec::with_capacity(bounds.area() as usize);
         // TODO: Implement an iterator over all grid cells.
-        for y in offset.y..(dimensions.y + offset.y) {
-            for x in offset.x..(dimensions.x + offset.x) {
+        for y in bounds.y_range() {
+            for x in bounds.x_range() {
                 let coord = Coord::new(x, y);
                 cells.push(generator(coord.into()));
             }
         }
-        Self {
-            cells,
-            dimensions,
-            offset,
-        }
+        Self { cells, bounds }
     }
 
     pub fn get(&self, coord: Coord) -> Option<&T> {
@@ -124,7 +100,7 @@ impl<T> Grid<T> {
         T: Default,
     {
         // Make sure both coordinates are in bounds before mutating things.
-        if !(self.coord_in_bounds(src) && self.coord_in_bounds(dest)) {
+        if !(self.bounds.contains(src) && self.bounds.contains(dest)) {
             return None;
         }
         let src_value = self.take(src).unwrap();
@@ -196,30 +172,17 @@ impl<T> Grid<T> {
     }
 
     fn coord_to_index(&self, coord: Coord) -> Option<usize> {
-        if !self.coord_in_bounds(coord) {
+        if !self.bounds.contains(coord) {
             return None;
         }
-        let offset_coord = coord - self.offset;
-        Some((offset_coord.x + offset_coord.y * self.dimensions.x) as usize)
+        let offset_coord = coord - self.bounds.offset();
+        Some((offset_coord.x + offset_coord.y * self.bounds.width()) as usize)
     }
 
     fn index_to_coord(&self, index: usize) -> Coord {
-        let y = (index as f32 / self.dimensions.y as f32).floor() as i32;
-        let x = index as i32 - (y * self.dimensions.y) as i32;
-        Coord::new(x, y) + self.offset
-    }
-
-    fn bounds(&self) -> Rect {
-        Rect {
-            top: self.dimensions.y - self.offset.y - 1,
-            bottom: self.offset.y,
-            left: self.offset.x,
-            right: self.dimensions.x - self.offset.x - 1,
-        }
-    }
-
-    fn coord_in_bounds(&self, coord: Coord) -> bool {
-        self.bounds().contains(coord)
+        let y = (index as f32 / self.bounds.height() as f32).floor() as i32;
+        let x = index as i32 - (y * self.bounds.height()) as i32;
+        Coord::new(x, y) + self.bounds.offset()
     }
 }
 
@@ -320,7 +283,7 @@ impl<'a, T> Iterator for FloodIter<'a, T> {
                 .filter(|&coord| {
                     !(self.searched_coords.contains(&coord)
                         || self.coords_to_search.contains(&coord))
-                        && self.grid.coord_in_bounds(coord)
+                        && self.grid.bounds.contains(coord)
                 })
                 .collect::<Vec<Coord>>();
 
@@ -339,8 +302,8 @@ where
     T: Copy,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        for y in self.offset.y..(self.dimensions.y + self.offset.y) {
-            for x in self.offset.x..(self.dimensions.x + self.offset.x) {
+        for y in self.bounds.y_range() {
+            for x in self.bounds.x_range() {
                 let coord = Coord::new(x, y);
                 let c: char = match self.get(coord) {
                     Some(cell) => char::from(*cell),
@@ -363,15 +326,21 @@ mod tests {
     use super::*;
 
     #[test]
+    fn bounds_and_dimensions() {
+        let grid = Grid::<()>::new(Rect::with_corners((0, 0), (7, 7)));
+        assert_eq!(grid.bounds.width(), 8);
+    }
+
+    #[test]
     fn out_of_bounds_coords() {
-        let grid = Grid::<()>::new((8, 8), (0, 0));
+        let grid = Grid::<()>::new(Rect::with_corners((0, 0), (7, 7)));
         // This would pass `coord_to_index` if there was no bounds check.
         assert_eq!(grid.get(Coord::new(-1, 4)), None);
     }
 
     #[test]
     fn selection_iter_mut() {
-        let mut grid: Grid<bool> = Grid::new((4, 4), (0, 0));
+        let mut grid: Grid<bool> = Grid::new(Rect::with_corners((0, 0), (3, 3)));
         // Set all neighbors of (2, 2) to `true`.
         for res_cell in grid.selection_iter_mut(patterns::neighborhood((2, 2))) {
             *res_cell.unwrap().1 = true;
@@ -385,7 +354,7 @@ mod tests {
 
     #[test]
     fn selection_iter_mut_already_visited() {
-        let mut grid: Grid<bool> = Grid::new((4, 4), (0, 0));
+        let mut grid: Grid<bool> = Grid::new(Rect::with_corners((0, 0), (3, 3)));
         let coords = [(2, 2), (2, 2)].iter().map(|&x| x.into());
         let mut iter = grid.selection_iter_mut(coords);
         assert!(iter.next().unwrap().is_ok());
