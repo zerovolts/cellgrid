@@ -9,4 +9,4 @@ name = "autocell"
 path = "src/lib.rs"
 
 [dependencies]
-rand = "0.7.3"
+rand = "0.8"
