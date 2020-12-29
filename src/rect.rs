@@ -2,7 +2,7 @@ use std::ops::Range;
 
 use crate::coord::Coord;
 
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 pub struct Rect {
     pub top: i32,
     pub bottom: i32,
@@ -52,6 +52,69 @@ impl Rect {
         (self.top - self.bottom) + 1
     }
 
+    pub fn partition_vertical(&self, partition: i32) -> (Self, Self) {
+        let absolute_partition = self.bottom + partition;
+        (
+            // Bottom partition
+            Self {
+                top: absolute_partition - 1,
+                ..*self
+            },
+            // Top partition
+            Self {
+                bottom: absolute_partition,
+                ..*self
+            },
+        )
+    }
+
+    pub fn partition_horizontal(&self, partition: i32) -> (Self, Self) {
+        let absolute_partition = self.left + partition;
+        (
+            // Left partition
+            Self {
+                right: absolute_partition - 1,
+                ..*self
+            },
+            // Right partition
+            Self {
+                left: absolute_partition,
+                ..*self
+            },
+        )
+    }
+
+    /// Executes a binary space partition with the given splitter algorithm.
+    pub fn bsp(
+        &self,
+        orientation: Orientation,
+        splitter: &dyn Fn(Rect, Orientation) -> Option<(i32, Orientation)>,
+    ) -> BspTree {
+        match splitter(*self, orientation) {
+            Some((partition, next_orientation)) => {
+                let (left_or_bottom, right_or_top) = match orientation {
+                    Orientation::Horizontal => self.partition_horizontal(partition),
+                    Orientation::Vertical => self.partition_vertical(partition),
+                };
+                BspTree::Node(
+                    *self,
+                    Box::new(left_or_bottom.bsp(next_orientation, splitter)),
+                    Box::new(right_or_top.bsp(next_orientation, splitter)),
+                )
+            }
+            None => BspTree::Leaf(*self),
+        }
+    }
+
+    pub fn translate(&self, coord: Coord) -> Self {
+        Self {
+            bottom: self.bottom + coord.y,
+            left: self.left + coord.x,
+            top: self.top + coord.y,
+            right: self.right + coord.x,
+        }
+    }
+
     pub fn contains(&self, coord: Coord) -> bool {
         coord.x >= self.left
             && coord.x <= self.right
@@ -76,6 +139,40 @@ impl Rect {
             rect: *self,
             next_coord,
             is_finished: false,
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
+pub enum Orientation {
+    Horizontal,
+    Vertical,
+}
+
+impl Orientation {
+    pub fn orthogonal(&self) -> Self {
+        match self {
+            Orientation::Horizontal => Orientation::Vertical,
+            Orientation::Vertical => Orientation::Horizontal,
+        }
+    }
+}
+
+#[derive(Debug)]
+pub enum BspTree {
+    Node(Rect, Box<BspTree>, Box<BspTree>),
+    Leaf(Rect),
+}
+
+impl BspTree {
+    pub fn leaves(&self) -> Vec<Rect> {
+        match self {
+            BspTree::Node(_, left, right) => {
+                let mut leaves = left.leaves();
+                leaves.append(&mut right.leaves());
+                leaves
+            }
+            BspTree::Leaf(rect) => vec![*rect],
         }
     }
 }
@@ -141,5 +238,61 @@ mod tests {
         let coords = rect.iter().collect::<Vec<_>>();
         assert_eq!(coords.first(), Some(&Coord::new(-2, -2)));
         assert_eq!(coords.last(), Some(&Coord::new(2, 2)));
+    }
+
+    #[test]
+    fn vertical_partitioning() {
+        let rect = Rect::with_corners((0, 0), (7, 7));
+        let (top, bottom) = rect.partition_vertical(4);
+        assert_eq!(top.area(), 32);
+        assert_eq!(bottom.area(), 32);
+    }
+
+    #[test]
+    fn vertical_zero_partitioning() {
+        let rect = Rect::with_corners((0, 0), (7, 7));
+        let (top, bottom) = rect.partition_vertical(0);
+        assert_eq!(top.area(), 0);
+        assert_eq!(bottom.area(), 64);
+    }
+
+    #[test]
+    fn horizontal_partitioning() {
+        let rect = Rect::with_corners((0, 0), (7, 7));
+        let (left, right) = rect.partition_horizontal(4);
+        assert_eq!(left.area(), 32);
+        assert_eq!(right.area(), 32);
+    }
+
+    #[test]
+    fn horizontal_zero_partitioning() {
+        let rect = Rect::with_corners((0, 0), (7, 7));
+        let (left, right) = rect.partition_horizontal(0);
+        assert_eq!(left.area(), 0);
+        assert_eq!(right.area(), 64);
+    }
+
+    #[test]
+    fn equally_subdivided_bsp() {
+        let rect = Rect::with_corners((0, 0), (15, 15));
+        // The minimum distance a partition can get to the edge of a Rect.
+        let min_size = 4;
+
+        // Subdivide the rect into 16 4x4 pieces.
+        let bsp_leaves = rect
+            .bsp(Orientation::Horizontal, &|rect, orientation| {
+                let partition = match orientation {
+                    Orientation::Horizontal => rect.width() / 2,
+                    Orientation::Vertical => rect.height() / 2,
+                };
+                if partition < min_size {
+                    return None;
+                }
+                Some((partition, orientation.orthogonal()))
+            })
+            .leaves();
+
+        assert_eq!(bsp_leaves.len(), 16);
+        assert!(bsp_leaves.iter().all(|rect| rect.area() == 16));
     }
 }
