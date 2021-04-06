@@ -1,11 +1,11 @@
 [package]
-name = "autocell"
+name = "tenji"
 version = "0.1.0"
 authors = ["Zach Stone <zach@zerovolts.com>"]
 edition = "2018"
 
 [lib]
-name = "autocell"
+name = "tenji"
 path = "src/lib.rs"
 
 [dependencies]

@@ -1,7 +1,6 @@
-A temporarily-named library that implements many common operations over
-generic 2D matrices. This came about after having implemented the same
-flood-fill, neighbor selection, and other operations in multiple grid-based
-game projects.
+A library that implements many common operations over generic 2D matrices.
+This came about after having implemented the same flood-fill, neighbor
+selection, and other operations in multiple grid-based game projects.
 
 The core of this library is the `Grid<T>` type along with its selection and
 flood iterators.
