@@ -309,7 +309,7 @@ where
                     Some(cell) => char::from(*cell),
                     None => '�',
                 };
-                if let Err(e) = write!(f, "{} ", c) {
+                if let Err(e) = write!(f, "{}", c) {
                     return Err(e);
                 }
             }
