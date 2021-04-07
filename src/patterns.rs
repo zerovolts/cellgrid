@@ -44,7 +44,14 @@ pub fn diag_neighborhood<'a, C: Into<Coord>>(coord: C) -> impl Iterator<Item = C
 }
 
 /// Traces Bresenham's line algorithm between `from` and `to`.
-pub fn line(from: Coord, to: Coord) -> impl Iterator<Item = Coord> {
+pub fn line<C1, C2>(from: C1, to: C2) -> impl Iterator<Item = Coord>
+where
+    C1: Into<Coord>,
+    C2: Into<Coord>,
+{
+    let from = from.into();
+    let to = to.into();
+
     let delta = to - from;
     let x_step = Coord::new(delta.x.signum(), 0);
     let y_step = Coord::new(0, delta.y.signum());

@@ -106,7 +106,8 @@ impl Rect {
         }
     }
 
-    pub fn translate(&self, coord: Coord) -> Self {
+    pub fn translate<C: Into<Coord>>(&self, coord: C) -> Self {
+        let coord = coord.into();
         Self {
             bottom: self.bottom + coord.y,
             left: self.left + coord.x,
@@ -115,7 +116,8 @@ impl Rect {
         }
     }
 
-    pub fn contains(&self, coord: Coord) -> bool {
+    pub fn contains<C: Into<Coord>>(&self, coord: C) -> bool {
+        let coord = coord.into();
         coord.x >= self.left
             && coord.x <= self.right
             && coord.y >= self.bottom
@@ -215,26 +217,26 @@ mod tests {
 
     #[test]
     fn dimensions() {
-        let rect = Rect::with_corners(Coord::new(0, 0), Coord::new(3, 4));
+        let rect = Rect::with_corners((0, 0), (3, 4));
         assert_eq!(rect.width(), 4);
         assert_eq!(rect.height(), 5);
     }
 
     #[test]
     fn single_coord_rect_iter() {
-        let rect = Rect::with_corners(Coord::new(0, 0), Coord::new(0, 0));
+        let rect = Rect::with_corners((0, 0), (0, 0));
         assert_eq!(rect.iter().count(), 1);
     }
 
     #[test]
     fn multi_coord_rect_iter() {
-        let rect = Rect::with_corners(Coord::new(0, 0), Coord::new(3, 3));
+        let rect = Rect::with_corners((0, 0), (3, 3));
         assert_eq!(rect.iter().count(), 16);
     }
 
     #[test]
     fn reversed_coord_rect_iter() {
-        let rect = Rect::with_corners(Coord::new(2, 2), Coord::new(-2, -2));
+        let rect = Rect::with_corners((2, 2), (-2, -2));
         let coords = rect.iter().collect::<Vec<_>>();
         assert_eq!(coords.first(), Some(&Coord::new(-2, -2)));
         assert_eq!(coords.last(), Some(&Coord::new(2, 2)));

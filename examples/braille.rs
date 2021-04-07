@@ -5,11 +5,11 @@ fn main() {
 
     // Draw the outline of a shape.
 
-    let c1 = Coord::new(27, 3);
-    let c2 = Coord::new(52, 12);
-    let c3 = Coord::new(50, 42);
-    let c4 = Coord::new(20, 45);
-    let c5 = Coord::new(5, 20);
+    let c1 = (27, 3);
+    let c2 = (52, 12);
+    let c3 = (50, 42);
+    let c4 = (20, 45);
+    let c5 = (5, 20);
 
     let coords = patterns::line(c1, c2)
         .chain(patterns::line(c2, c3))
@@ -26,7 +26,7 @@ fn main() {
     // Fill the interior of the shape.
 
     let flood_coords = bitgrid
-        .flood_iter(Coord::new(32, 32), |&cell| cell == false)
+        .flood_iter((32, 32), |&cell| cell == false)
         .map(|(coord, _)| coord)
         .collect::<Vec<Coord>>();
 

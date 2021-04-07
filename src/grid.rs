@@ -38,16 +38,16 @@ impl<T> Grid<T> {
         Self { cells, bounds }
     }
 
-    pub fn get(&self, coord: Coord) -> Option<&T> {
+    pub fn get<C: Into<Coord>>(&self, coord: C) -> Option<&T> {
         self.cells.get(self.coord_to_index(coord)?)
     }
 
-    pub fn get_mut(&mut self, coord: Coord) -> Option<&mut T> {
+    pub fn get_mut<C: Into<Coord>>(&mut self, coord: C) -> Option<&mut T> {
         let index = self.coord_to_index(coord)?;
         self.cells.get_mut(index)
     }
 
-    pub fn set(&mut self, coord: Coord, value: T) -> bool {
+    pub fn set<C: Into<Coord>>(&mut self, coord: C, value: T) -> bool {
         if let Some(cell) = self.get_mut(coord) {
             *cell = value;
             true
@@ -56,21 +56,23 @@ impl<T> Grid<T> {
         }
     }
 
-    pub fn replace(&mut self, coord: Coord, value: T) -> Option<T> {
+    pub fn replace<C: Into<Coord>>(&mut self, coord: C, value: T) -> Option<T> {
         self.get_mut(coord)
             .and_then(|cell| Some(mem::replace(cell, value)))
     }
 
-    pub fn take(&mut self, coord: Coord) -> Option<T>
+    pub fn take<C: Into<Coord>>(&mut self, coord: C) -> Option<T>
     where
         T: Default,
     {
         self.get_mut(coord).and_then(|cell| Some(mem::take(cell)))
     }
 
-    pub fn copy(&mut self, src: Coord, dest: Coord) -> bool
+    pub fn copy<C1, C2>(&mut self, src: C1, dest: C2) -> bool
     where
         T: Copy,
+        C1: Into<Coord>,
+        C2: Into<Coord>,
     {
         if let Some(src_index) = self.coord_to_index(src) {
             if let Some(dest_index) = self.coord_to_index(dest) {
@@ -83,7 +85,11 @@ impl<T> Grid<T> {
     }
 
     /// Swaps the contents of two cells.
-    pub fn swap(&mut self, coord1: Coord, coord2: Coord) -> bool {
+    pub fn swap<C1, C2>(&mut self, coord1: C1, coord2: C2) -> bool
+    where
+        C1: Into<Coord>,
+        C2: Into<Coord>,
+    {
         if let Some(index1) = self.coord_to_index(coord1) {
             if let Some(index2) = self.coord_to_index(coord2) {
                 self.cells.swap(index1, index2);
@@ -155,13 +161,13 @@ impl<T> Grid<T> {
     /// resulting iterator can be collected and then passed into
     /// [`Grid::selection_iter_mut`](crate::grid::Grid::selection_iter_mut) to
     /// gain access to mutable cell contents.
-    pub fn flood_iter(
+    pub fn flood_iter<C: Into<Coord>>(
         &self,
-        starting_coord: Coord,
+        starting_coord: C,
         predicate: impl Fn(&T) -> bool + 'static,
     ) -> FloodIter<T> {
         let mut coords_to_search = VecDeque::new();
-        coords_to_search.push_back(starting_coord);
+        coords_to_search.push_back(starting_coord.into());
 
         FloodIter {
             grid: self,
@@ -171,7 +177,8 @@ impl<T> Grid<T> {
         }
     }
 
-    fn coord_to_index(&self, coord: Coord) -> Option<usize> {
+    fn coord_to_index<C: Into<Coord>>(&self, coord: C) -> Option<usize> {
+        let coord = coord.into();
         if !self.bounds.contains(coord) {
             return None;
         }
@@ -304,8 +311,7 @@ where
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         for y in self.bounds.y_range() {
             for x in self.bounds.x_range() {
-                let coord = Coord::new(x, y);
-                let c: char = match self.get(coord) {
+                let c: char = match self.get((x, y)) {
                     Some(cell) => char::from(*cell),
                     None => '�',
                 };

@@ -79,7 +79,7 @@ fn shrink_randomly(rect: Rect, min_dimension: i32) -> Rect {
         right: rect.right - horizontal_shrink,
         ..rect
     }
-    .translate(Coord::new(new_x, new_y))
+    .translate((new_x, new_y))
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
