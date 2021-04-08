@@ -4,18 +4,12 @@ use std::char;
 pub fn braillify_grid(bitgrid: Grid<bool>) -> Grid<char> {
     // Assume the input grid has dimensions that are a multiple of (2, 4).
     Grid::<char>::with_generator(
-        Rect::with_corners(
-            (0, 0),
-            (
-                bitgrid.bounds.width() / 2 - 1,
-                bitgrid.bounds.height() / 4 - 1,
-            ),
-        ),
+        Rect::new((bitgrid.bounds.width() / 2, bitgrid.bounds.height() / 4)),
         |coord: Coord| {
             // Get a 2x4 rect of cells from the bitgrid and reduce them into a
             // single char.
             let top_left = Coord::new(coord.x * 2, coord.y * 4);
-            let rect = Rect::with_corners(top_left, top_left + Coord::new(1, 3));
+            let rect = Rect::with_corners(top_left, top_left + Coord::new(2, 4));
             let bits = bitgrid
                 .selection_iter(rect.iter())
                 .map(|cell| if let Ok(cell) = cell { *cell.1 } else { false })

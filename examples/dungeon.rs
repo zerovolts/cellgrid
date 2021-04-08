@@ -1,14 +1,13 @@
 use rand::Rng;
 
 use tenji::{
-    coord::Coord,
     grid::Grid,
     patterns::cluster_layers,
     rect::{Orientation, Rect},
 };
 
 fn main() {
-    let rect = Rect::with_corners((0, 0), (63, 63));
+    let rect = Rect::new((64, 64));
     // The minimum distance a partition can get to the edge of a Rect.
     let min_size = 8;
 

@@ -333,20 +333,20 @@ mod tests {
 
     #[test]
     fn bounds_and_dimensions() {
-        let grid = Grid::<()>::new(Rect::with_corners((0, 0), (7, 7)));
+        let grid = Grid::<()>::new(Rect::new((8, 8)));
         assert_eq!(grid.bounds.width(), 8);
     }
 
     #[test]
     fn out_of_bounds_coords() {
-        let grid = Grid::<()>::new(Rect::with_corners((0, 0), (7, 7)));
+        let grid = Grid::<()>::new(Rect::new((8, 8)));
         // This would pass `coord_to_index` if there was no bounds check.
         assert_eq!(grid.get(Coord::new(-1, 4)), None);
     }
 
     #[test]
     fn selection_iter_mut() {
-        let mut grid: Grid<bool> = Grid::new(Rect::with_corners((0, 0), (3, 3)));
+        let mut grid: Grid<bool> = Grid::new(Rect::new((4, 4)));
         // Set all neighbors of (2, 2) to `true`.
         for res_cell in grid.selection_iter_mut(patterns::neighborhood((2, 2))) {
             *res_cell.unwrap().1 = true;
@@ -360,7 +360,7 @@ mod tests {
 
     #[test]
     fn selection_iter_mut_already_visited() {
-        let mut grid: Grid<bool> = Grid::new(Rect::with_corners((0, 0), (3, 3)));
+        let mut grid: Grid<bool> = Grid::new(Rect::new((3, 3)));
         let coords = [(2, 2), (2, 2)].iter().map(|&x| x.into());
         let mut iter = grid.selection_iter_mut(coords);
         assert!(iter.next().unwrap().is_ok());

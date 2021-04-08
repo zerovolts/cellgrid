@@ -11,7 +11,12 @@ pub struct Rect {
 }
 
 impl Rect {
-    /// Returns a RectBounds, given any two (inclusive) corners of a rectangle.
+    /// Constructs a Rect at (0, 0).
+    pub fn new<C: Into<Coord>>(dimensions: C) -> Self {
+        Self::with_corners((0, 0), dimensions)
+    }
+
+    /// Constructs a Rect, given _any_ two corners.
     ///
     /// It is advisable to use this over creating a RectBounds literal, because
     /// this will prevent invalid states, such as `top` being less than `bottom`.
@@ -43,13 +48,11 @@ impl Rect {
     }
 
     pub fn width(&self) -> i32 {
-        // Add one because `right` is inclusive.
-        (self.right - self.left) + 1
+        self.right - self.left
     }
 
     pub fn height(&self) -> i32 {
-        // Add one because `top` is inclusive.
-        (self.top - self.bottom) + 1
+        self.top - self.bottom
     }
 
     pub fn partition_vertical(&self, partition: i32) -> (Self, Self) {
@@ -57,7 +60,7 @@ impl Rect {
         (
             // Bottom partition
             Self {
-                top: absolute_partition - 1,
+                top: absolute_partition,
                 ..*self
             },
             // Top partition
@@ -73,7 +76,7 @@ impl Rect {
         (
             // Left partition
             Self {
-                right: absolute_partition - 1,
+                right: absolute_partition,
                 ..*self
             },
             // Right partition
@@ -118,20 +121,15 @@ impl Rect {
 
     pub fn contains<C: Into<Coord>>(&self, coord: C) -> bool {
         let coord = coord.into();
-        coord.x >= self.left
-            && coord.x <= self.right
-            && coord.y >= self.bottom
-            && coord.y <= self.top
+        coord.x >= self.left && coord.x < self.right && coord.y >= self.bottom && coord.y < self.top
     }
 
     pub fn x_range(&self) -> Range<i32> {
-        // Add one because `right` is inclusive.
-        self.left..(self.right + 1)
+        self.left..self.right
     }
 
     pub fn y_range(&self) -> Range<i32> {
-        // Add one because `top` is inclusive.
-        self.bottom..(self.top + 1)
+        self.bottom..self.top
     }
 
     pub fn iter(&self) -> impl Iterator<Item = Coord> {
@@ -197,9 +195,9 @@ impl Iterator for RectIter {
         // We return the coordinate computed on the previous iteration.
         let next_coord = self.next_coord;
 
-        if self.next_coord.x < self.rect.right {
+        if self.next_coord.x < self.rect.right - 1 {
             self.next_coord.x += 1;
-        } else if self.next_coord.y < self.rect.top {
+        } else if self.next_coord.y < self.rect.top - 1 {
             self.next_coord.x = self.rect.left;
             self.next_coord.y += 1;
         } else {
@@ -217,26 +215,26 @@ mod tests {
 
     #[test]
     fn dimensions() {
-        let rect = Rect::with_corners((0, 0), (3, 4));
-        assert_eq!(rect.width(), 4);
-        assert_eq!(rect.height(), 5);
+        let rect = Rect::new((3, 4));
+        assert_eq!(rect.width(), 3);
+        assert_eq!(rect.height(), 4);
     }
 
     #[test]
     fn single_coord_rect_iter() {
-        let rect = Rect::with_corners((0, 0), (0, 0));
+        let rect = Rect::new((0, 0));
         assert_eq!(rect.iter().count(), 1);
     }
 
     #[test]
     fn multi_coord_rect_iter() {
-        let rect = Rect::with_corners((0, 0), (3, 3));
+        let rect = Rect::new((4, 4));
         assert_eq!(rect.iter().count(), 16);
     }
 
     #[test]
     fn reversed_coord_rect_iter() {
-        let rect = Rect::with_corners((2, 2), (-2, -2));
+        let rect = Rect::with_corners((3, 3), (-2, -2));
         let coords = rect.iter().collect::<Vec<_>>();
         assert_eq!(coords.first(), Some(&Coord::new(-2, -2)));
         assert_eq!(coords.last(), Some(&Coord::new(2, 2)));
@@ -244,7 +242,7 @@ mod tests {
 
     #[test]
     fn vertical_partitioning() {
-        let rect = Rect::with_corners((0, 0), (7, 7));
+        let rect = Rect::new((8, 8));
         let (top, bottom) = rect.partition_vertical(4);
         assert_eq!(top.area(), 32);
         assert_eq!(bottom.area(), 32);
@@ -252,7 +250,7 @@ mod tests {
 
     #[test]
     fn vertical_zero_partitioning() {
-        let rect = Rect::with_corners((0, 0), (7, 7));
+        let rect = Rect::new((8, 8));
         let (top, bottom) = rect.partition_vertical(0);
         assert_eq!(top.area(), 0);
         assert_eq!(bottom.area(), 64);
@@ -260,7 +258,7 @@ mod tests {
 
     #[test]
     fn horizontal_partitioning() {
-        let rect = Rect::with_corners((0, 0), (7, 7));
+        let rect = Rect::new((8, 8));
         let (left, right) = rect.partition_horizontal(4);
         assert_eq!(left.area(), 32);
         assert_eq!(right.area(), 32);
@@ -268,7 +266,7 @@ mod tests {
 
     #[test]
     fn horizontal_zero_partitioning() {
-        let rect = Rect::with_corners((0, 0), (7, 7));
+        let rect = Rect::new((8, 8));
         let (left, right) = rect.partition_horizontal(0);
         assert_eq!(left.area(), 0);
         assert_eq!(right.area(), 64);
@@ -276,7 +274,7 @@ mod tests {
 
     #[test]
     fn equally_subdivided_bsp() {
-        let rect = Rect::with_corners((0, 0), (15, 15));
+        let rect = Rect::new((16, 16));
         // The minimum distance a partition can get to the edge of a Rect.
         let min_size = 4;
 

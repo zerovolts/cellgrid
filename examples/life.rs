@@ -21,7 +21,7 @@ struct LifeBoard {
 impl LifeBoard {
     fn random<C: Into<Coord>>(dimensions: C) -> Self {
         Self {
-            grid: Grid::with_generator(Rect::with_corners((0, 0), dimensions), |(_x, _y)| {
+            grid: Grid::with_generator(Rect::new(dimensions), |(_x, _y)| {
                 rand::random::<LifeState>()
             }),
         }

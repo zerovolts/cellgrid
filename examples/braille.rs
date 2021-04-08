@@ -1,7 +1,7 @@
 use tenji::{braille::braillify_grid, coord::Coord, grid::Grid, patterns, rect::Rect};
 
 fn main() {
-    let mut bitgrid = Grid::<bool>::new(Rect::with_corners((0, 0), (60, 50)));
+    let mut bitgrid = Grid::<bool>::new(Rect::new((60, 50)));
 
     // Draw the outline of a shape.
 
