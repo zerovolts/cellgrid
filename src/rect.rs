@@ -19,7 +19,7 @@ impl Rect {
     /// Constructs a Rect, given _any_ two corners.
     ///
     /// It is advisable to use this over creating a RectBounds literal, because
-    /// this will prevent invalid states, such as `top` being less than `bottom`.
+    /// this will prevent invalid states, such as `left` being less than `right`.
     pub fn with_corners<C1, C2>(corner1: C1, corner2: C2) -> Self
     where
         C1: Into<Coord>,
@@ -28,8 +28,9 @@ impl Rect {
         let corner1 = corner1.into();
         let corner2 = corner2.into();
         Self {
-            top: corner1.y.max(corner2.y),
-            bottom: corner1.y.min(corner2.y),
+            // Top is the less than bottom to match other graphics applications.
+            top: corner1.y.min(corner2.y),
+            bottom: corner1.y.max(corner2.y),
             left: corner1.x.min(corner2.x),
             right: corner1.x.max(corner2.x),
         }
@@ -40,7 +41,7 @@ impl Rect {
     }
 
     pub fn offset(&self) -> Coord {
-        Coord::new(self.left, self.bottom)
+        Coord::new(self.left, self.top)
     }
 
     pub fn area(&self) -> i32 {
@@ -52,18 +53,18 @@ impl Rect {
     }
 
     pub fn height(&self) -> i32 {
-        self.top - self.bottom
+        self.bottom - self.top
     }
 
     pub fn partition_vertical(&self, partition: i32) -> (Self, Self) {
-        let absolute_partition = self.bottom + partition;
+        let absolute_partition = self.top + partition;
         (
-            // Bottom partition
+            // Bottom partition (physically top)
             Self {
                 top: absolute_partition,
                 ..*self
             },
-            // Top partition
+            // Top partition (physically bottom)
             Self {
                 bottom: absolute_partition,
                 ..*self
@@ -121,7 +122,7 @@ impl Rect {
 
     pub fn contains<C: Into<Coord>>(&self, coord: C) -> bool {
         let coord = coord.into();
-        coord.x >= self.left && coord.x < self.right && coord.y >= self.bottom && coord.y < self.top
+        coord.x >= self.left && coord.x < self.right && coord.y >= self.top && coord.y < self.bottom
     }
 
     pub fn x_range(&self) -> Range<i32> {
@@ -129,11 +130,11 @@ impl Rect {
     }
 
     pub fn y_range(&self) -> Range<i32> {
-        self.bottom..self.top
+        self.top..self.bottom
     }
 
     pub fn iter(&self) -> impl Iterator<Item = Coord> {
-        let next_coord = Coord::new(self.left, self.bottom);
+        let next_coord = Coord::new(self.left, self.top);
 
         RectIter {
             rect: *self,
@@ -197,7 +198,7 @@ impl Iterator for RectIter {
 
         if self.next_coord.x < self.rect.right - 1 {
             self.next_coord.x += 1;
-        } else if self.next_coord.y < self.rect.top - 1 {
+        } else if self.next_coord.y < self.rect.bottom - 1 {
             self.next_coord.x = self.rect.left;
             self.next_coord.y += 1;
         } else {
@@ -251,7 +252,7 @@ mod tests {
     #[test]
     fn vertical_zero_partitioning() {
         let rect = Rect::new((8, 8));
-        let (top, bottom) = rect.partition_vertical(0);
+        let (bottom, top) = rect.partition_vertical(0);
         assert_eq!(top.area(), 0);
         assert_eq!(bottom.area(), 64);
     }
