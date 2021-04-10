@@ -70,7 +70,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "tenji"
+name = "tapestry"
 version = "0.1.0"
 dependencies = [
  "rand",

@@ -1,11 +1,20 @@
 [package]
-name = "tenji"
+name = "tapestry"
 version = "0.1.0"
 authors = ["Zach Stone <zach@zerovolts.com>"]
+license = "MIT"
+readme = "README.md"
+documentation = "https://docs.rs/tapestry"
+repository = "https://github.com/zerovolts/tapestry"
+homepage = "https://github.com/zerovolts/tapestry"
+description = "Generic 2D grid data structure and utilities."
+keywords = ["2d", "grid", "matrix", "geometry"]
+categories = ["data-structures"]
 edition = "2018"
+exclude = ["assets/*"]
 
 [lib]
-name = "tenji"
+name = "tapestry"
 path = "src/lib.rs"
 
 [dependencies]

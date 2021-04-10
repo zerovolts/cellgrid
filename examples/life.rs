@@ -3,7 +3,7 @@ use rand::{
     Rng,
 };
 
-use tenji::{coord::Coord, grid::Grid, patterns, rect::Rect};
+use tapestry::{coord::Coord, grid::Grid, patterns, rect::Rect};
 
 fn main() {
     let mut life_board = LifeBoard::random((16, 16));

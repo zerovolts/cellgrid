@@ -1,6 +1,6 @@
 use rand::Rng;
 
-use tenji::{
+use tapestry::{
     grid::Grid,
     patterns::cluster_layers,
     rect::{Orientation, Rect},
