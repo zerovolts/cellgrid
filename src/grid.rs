@@ -187,8 +187,8 @@ impl<T> Grid<T> {
     }
 
     fn index_to_coord(&self, index: usize) -> Coord {
-        let y = (index as f32 / self.bounds.height() as f32).floor() as i32;
-        let x = index as i32 - (y * self.bounds.height()) as i32;
+        let y = (index as f32 / self.bounds.width() as f32).floor() as i32;
+        let x = index as i32 - (y * self.bounds.width()) as i32;
         Coord::new(x, y) + self.bounds.offset()
     }
 }
@@ -342,6 +342,12 @@ mod tests {
         let grid = Grid::<()>::new(Rect::new((8, 8)));
         // This would pass `coord_to_index` if there was no bounds check.
         assert_eq!(grid.get(Coord::new(-1, 4)), None);
+    }
+
+    #[test]
+    fn test_index_to_coord() {
+        let grid = Grid::<()>::new(Rect::new((8, 4)));
+        assert_eq!(grid.index_to_coord(12), Coord::new(4, 1));
     }
 
     #[test]
