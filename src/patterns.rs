@@ -8,40 +8,7 @@
 
 use std::{collections::HashSet, iter::FromIterator};
 
-use crate::coord::Coord;
-
-/// Returns the orthogonal and diagonal (Moore) neighborhood of `coord`.
-pub fn neighborhood<'a, C: Into<Coord>>(coord: C) -> impl Iterator<Item = Coord> + 'a {
-    let coord = coord.into();
-    [
-        (0, 1),
-        (1, 1),
-        (1, 0),
-        (1, -1),
-        (0, -1),
-        (-1, -1),
-        (-1, 0),
-        (-1, 1),
-    ]
-    .iter()
-    .map(move |&offset| coord + offset.into())
-}
-
-/// Returns the orthogonal (Von Neumann) neighborhood of `coord`.
-pub fn ortho_neighborhood<'a, C: Into<Coord>>(coord: C) -> impl Iterator<Item = Coord> + 'a {
-    let coord = coord.into();
-    [(0, 1), (1, 0), (0, -1), (-1, 0)]
-        .iter()
-        .map(move |&offset| coord + offset.into())
-}
-
-/// Returns the diagonal neighborhood of `coord` (for completeness).
-pub fn diag_neighborhood<'a, C: Into<Coord>>(coord: C) -> impl Iterator<Item = Coord> + 'a {
-    let coord = coord.into();
-    [(1, 1), (1, -1), (-1, -1), (-1, 1)]
-        .iter()
-        .map(move |&offset| coord + offset.into())
-}
+use crate::{coord::Coord, neighborhood::Neighborhood};
 
 /// Represents various layers of a selection of coords (cluster).
 ///
@@ -76,7 +43,8 @@ pub fn cluster_layers(cluster: Vec<Coord>) -> ClusterLayers {
     let mut interior = HashSet::new();
 
     for coord in cluster {
-        let non_cluster_coords = neighborhood(coord)
+        let non_cluster_coords = Neighborhood::new(coord)
+            .iter()
             .filter(|neighbor| !cluster_set.contains(neighbor))
             .collect::<Vec<_>>();
         if non_cluster_coords.len() == 0 {

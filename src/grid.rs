@@ -3,7 +3,7 @@ use std::{
     fmt, mem,
 };
 
-use crate::{coord::Coord, patterns, rect::Rect};
+use crate::{coord::Coord, neighborhood::Neighborhood, rect::Rect};
 
 /// The core type of this library. A 2D grid of cell type `T`.
 pub struct Grid<T> {
@@ -286,7 +286,8 @@ impl<'a, T> Iterator for FloodIter<'a, T> {
                 continue;
             }
 
-            let neighbor_coords = patterns::ortho_neighborhood(coord)
+            let neighbor_coords = Neighborhood::new(coord)
+                .iter_ortho()
                 .filter(|&coord| {
                     !(self.searched_coords.contains(&coord)
                         || self.coords_to_search.contains(&coord))
@@ -354,7 +355,7 @@ mod tests {
     fn selection_iter_mut() {
         let mut grid: Grid<bool> = Grid::new(Rect::new((4, 4)));
         // Set all neighbors of (2, 2) to `true`.
-        for res_cell in grid.selection_iter_mut(patterns::neighborhood((2, 2))) {
+        for res_cell in grid.selection_iter_mut(Neighborhood::new((2, 2)).iter()) {
             *res_cell.unwrap().1 = true;
         }
         assert_eq!(grid.get(Coord::new(2, 2)), Some(&false)); // center

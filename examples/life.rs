@@ -3,7 +3,7 @@ use rand::{
     Rng,
 };
 
-use tapestry::{coord::Coord, grid::Grid, patterns, rect::Rect};
+use tapestry::{coord::Coord, grid::Grid, neighborhood::Neighborhood, rect::Rect};
 
 fn main() {
     let mut life_board = LifeBoard::random((16, 16));
@@ -42,7 +42,7 @@ impl LifeBoard {
 
     fn live_neighbor_count(&self, coord: Coord) -> usize {
         self.grid
-            .selection_iter(patterns::neighborhood(coord))
+            .selection_iter(Neighborhood::new(coord).iter())
             .filter(|r_cell| {
                 if let Ok(cell) = r_cell {
                     *cell.1 == LifeState::Alive
