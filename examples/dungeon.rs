@@ -31,9 +31,9 @@ fn main() {
     let rooms = room_bounds.iter().flat_map(|room| {
         shrink_randomly(
             Rect {
-                bottom: room.bottom + 1,
+                bottom: room.bottom,
                 left: room.left + 1,
-                top: room.top,
+                top: room.top + 1,
                 right: room.right,
             },
             4,
@@ -74,7 +74,7 @@ fn shrink_randomly(rect: Rect, min_dimension: i32) -> Rect {
         0
     };
     Rect {
-        top: rect.top - vertical_shrink,
+        bottom: rect.bottom - vertical_shrink,
         right: rect.right - horizontal_shrink,
         ..rect
     }
