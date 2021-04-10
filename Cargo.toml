@@ -18,4 +18,4 @@ name = "tapestry"
 path = "src/lib.rs"
 
 [dependencies]
-rand = "0.8"
+rand = "0.8.3"
