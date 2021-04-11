@@ -110,7 +110,7 @@ mod tests {
 
     #[test]
     fn single_coord_cluster_layers() {
-        let cluster = Cluster::new(vec![Coord::new(0, 0)].iter().map(|&c| c));
+        let cluster = Cluster::new(vec![Coord::ZERO].iter().map(|&c| c));
         assert!(cluster.iter_interior().count() == 0);
         assert!(cluster.iter_internal_border().count() == 1);
         assert!(cluster.iter_external_border().count() == 8);

@@ -12,7 +12,24 @@ pub struct Coord {
 }
 
 impl Coord {
-    pub fn new(x: i32, y: i32) -> Self {
+    pub const ZERO: Self = Self::new(0, 0);
+    pub const ONE: Self = Self::new(1, 1);
+
+    pub const NEGATE: Self = Self::new(-1, -1);
+    pub const NEGATE_X: Self = Self::new(-1, 1);
+    pub const NEGATE_Y: Self = Self::new(1, -1);
+
+    pub const NORTH: Self = Self::new(0, 1);
+    pub const SOUTH: Self = Self::new(0, -1);
+    pub const EAST: Self = Self::new(1, 0);
+    pub const WEST: Self = Self::new(-1, 0);
+
+    pub const NORTH_EAST: Self = Self::ONE;
+    pub const SOUTH_EAST: Self = Self::NEGATE_Y;
+    pub const NORTH_WEST: Self = Self::NEGATE_X;
+    pub const SOUTH_WEST: Self = Self::NEGATE;
+
+    pub const fn new(x: i32, y: i32) -> Self {
         Coord { x, y }
     }
 }
@@ -120,21 +137,21 @@ mod tests {
         // TODO: Restrict accepted coord format
         let bad_parens_coord_str = ")0, 0(";
         let none_parens_coord_str = "0, 0";
-        assert_eq!(coord_str.parse(), Ok(Coord::new(0, 0)));
-        assert_eq!(bad_parens_coord_str.parse(), Ok(Coord::new(0, 0)));
-        assert_eq!(none_parens_coord_str.parse(), Ok(Coord::new(0, 0)));
+        assert_eq!(coord_str.parse(), Ok(Coord::ZERO));
+        assert_eq!(bad_parens_coord_str.parse(), Ok(Coord::ZERO));
+        assert_eq!(none_parens_coord_str.parse(), Ok(Coord::ZERO));
     }
 
     #[test]
     fn neg_coord_parse() {
         let coord_str = "(-1, -1)";
-        assert_eq!(coord_str.parse(), Ok(Coord::new(-1, -1)));
+        assert_eq!(coord_str.parse(), Ok(Coord::NEGATE));
     }
 
     #[test]
     fn flexible_spacing_coord_parse() {
         let coord_str = "(0   , 0   )";
-        assert_eq!(coord_str.parse(), Ok(Coord::new(0, 0)));
+        assert_eq!(coord_str.parse(), Ok(Coord::ZERO));
     }
 
     #[test]
