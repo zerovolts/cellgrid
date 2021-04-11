@@ -1,8 +1,8 @@
 use rand::Rng;
 
 use tapestry::{
+    cluster::Cluster,
     grid::Grid,
-    patterns::cluster_layers,
     rect::{Orientation, Rect},
 };
 
@@ -43,13 +43,13 @@ fn main() {
 
     // room_tree
 
-    let layers = cluster_layers(rooms.collect());
-    for result in grid.selection_iter_mut(layers.interior.into_iter()) {
+    let cluster = Cluster::new(rooms);
+    for result in grid.selection_iter_mut(cluster.iter_interior()) {
         if let Ok((_coord, cell)) = result {
             *cell = LifeState::Floor;
         }
     }
-    for result in grid.selection_iter_mut(layers.internal_border.into_iter()) {
+    for result in grid.selection_iter_mut(cluster.iter_internal_border()) {
         if let Ok((_coord, cell)) = result {
             *cell = LifeState::Wall;
         }

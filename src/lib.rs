@@ -1,3 +1,4 @@
+pub mod cluster;
 pub mod coord;
 pub mod grid;
 pub mod line;
