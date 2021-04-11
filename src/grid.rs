@@ -3,7 +3,10 @@ use std::{
     fmt, mem,
 };
 
-use crate::{coord::Coord, neighborhood::Neighborhood, rect::Rect};
+use crate::{
+    coord::Coord,
+    patterns::{Neighborhood, Rect},
+};
 
 /// The core type of this library. A 2D grid of cell type `T`.
 pub struct Grid<T> {

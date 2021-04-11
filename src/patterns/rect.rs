@@ -179,7 +179,7 @@ impl BspTree {
 }
 
 /// Iterates row by row from the bottom-left corner to the top-right corner.
-struct RectIter {
+pub struct RectIter {
     rect: Rect,
     next_coord: Coord,
     is_finished: bool,

@@ -49,7 +49,7 @@ impl Line {
     }
 }
 
-struct LineIter {
+pub struct LineIter {
     end_coord: Coord,
     next_coord: Coord,
     // Added to the coordinate every iteration.

@@ -1,9 +1,8 @@
 use rand::Rng;
 
 use tapestry::{
-    cluster::Cluster,
-    grid::Grid,
-    rect::{Orientation, Rect},
+    patterns::{Cluster, Orientation, Rect},
+    Grid,
 };
 
 fn main() {

@@ -3,7 +3,7 @@ use std::{
     iter::FromIterator,
 };
 
-use crate::{coord::Coord, neighborhood::Neighborhood};
+use crate::{coord::Coord, patterns::Neighborhood};
 
 /// Represents various "layers" of a selection of coords (cluster).
 ///

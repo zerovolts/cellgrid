@@ -3,7 +3,10 @@ use rand::{
     Rng,
 };
 
-use tapestry::{coord::Coord, grid::Grid, neighborhood::Neighborhood, rect::Rect};
+use tapestry::{
+    patterns::{Neighborhood, Rect},
+    Coord, Grid,
+};
 
 fn main() {
     let mut life_board = LifeBoard::random((16, 16));

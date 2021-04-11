@@ -1,7 +1,7 @@
-pub mod cluster;
-pub mod coord;
-pub mod grid;
-pub mod line;
-pub mod neighborhood;
 pub mod patterns;
-pub mod rect;
+
+mod coord;
+mod grid;
+
+pub use coord::{Coord, ParseCoordError};
+pub use grid::{FloodIter, Grid, GridError, SelectionIter, SelectionIterMut};
