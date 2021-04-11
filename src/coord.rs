@@ -1,6 +1,6 @@
 use std::{
     fmt,
-    ops::{Add, AddAssign, Sub, SubAssign},
+    ops::{Add, AddAssign, Mul, MulAssign, Sub, SubAssign},
     str::FromStr,
 };
 
@@ -44,6 +44,21 @@ impl SubAssign<Coord> for Coord {
     fn sub_assign(&mut self, rhs: Coord) {
         self.x -= rhs.x;
         self.y -= rhs.y;
+    }
+}
+
+impl Mul<Coord> for Coord {
+    type Output = Coord;
+
+    fn mul(self, rhs: Coord) -> Self::Output {
+        Coord::new(self.x * rhs.x, self.y * rhs.y)
+    }
+}
+
+impl MulAssign<Coord> for Coord {
+    fn mul_assign(&mut self, rhs: Coord) {
+        self.x *= rhs.x;
+        self.y *= rhs.y;
     }
 }
 
