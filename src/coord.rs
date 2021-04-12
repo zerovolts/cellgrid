@@ -15,22 +15,38 @@ impl Coord {
     pub const ZERO: Self = Self::new(0, 0);
     pub const ONE: Self = Self::new(1, 1);
 
-    pub const NEGATE: Self = Self::new(-1, -1);
-    pub const NEGATE_X: Self = Self::new(-1, 1);
-    pub const NEGATE_Y: Self = Self::new(1, -1);
-
     pub const NORTH: Self = Self::new(0, 1);
     pub const SOUTH: Self = Self::new(0, -1);
     pub const EAST: Self = Self::new(1, 0);
     pub const WEST: Self = Self::new(-1, 0);
 
     pub const NORTH_EAST: Self = Self::ONE;
-    pub const SOUTH_EAST: Self = Self::NEGATE_Y;
-    pub const NORTH_WEST: Self = Self::NEGATE_X;
-    pub const SOUTH_WEST: Self = Self::NEGATE;
+    pub const SOUTH_EAST: Self = Self::new(1, -1);
+    pub const NORTH_WEST: Self = Self::new(-1, 1);
+    pub const SOUTH_WEST: Self = Self::new(-1, -1);
 
     pub const fn new(x: i32, y: i32) -> Self {
-        Coord { x, y }
+        Self { x, y }
+    }
+
+    /// Reflect over the positive diagonal axis.
+    pub const fn flip(&self) -> Self {
+        Self::new(self.y, self.x)
+    }
+
+    /// Reflect over the negative diagonal axis.
+    pub const fn negate(&self) -> Self {
+        Self::new(-self.x, -self.y)
+    }
+
+    /// Reflect over the y-axis.
+    pub const fn negate_x(&self) -> Self {
+        Self::new(-self.x, self.y)
+    }
+
+    /// Reflect over the x-axis.
+    pub const fn negate_y(&self) -> Self {
+        Self::new(self.x, -self.y)
     }
 }
 
@@ -145,7 +161,7 @@ mod tests {
     #[test]
     fn neg_coord_parse() {
         let coord_str = "(-1, -1)";
-        assert_eq!(coord_str.parse(), Ok(Coord::NEGATE));
+        assert_eq!(coord_str.parse(), Ok(Coord::ONE.negate()));
     }
 
     #[test]
