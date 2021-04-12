@@ -38,7 +38,7 @@ impl LifeBoard {
             // `collect` to release the borrow on `self`.
             .collect::<Vec<_>>();
 
-        for (cell, neighbor_count) in self.grid.cell_iter_mut().zip(neighbor_counts) {
+        for ((_coord, cell), neighbor_count) in self.grid.iter_mut().zip(neighbor_counts) {
             *cell = LifeBoard::compute_state(*cell, neighbor_count)
         }
     }

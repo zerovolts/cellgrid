@@ -31,7 +31,6 @@ impl<T> Grid<T> {
         C: From<Coord>,
     {
         let mut cells = Vec::with_capacity(bounds.area() as usize);
-        // TODO: Implement an iterator over all grid cells.
         for y in bounds.y_range() {
             for x in bounds.x_range() {
                 let coord = Coord::new(x, y);
@@ -124,8 +123,13 @@ impl<T> Grid<T> {
             .map(move |cell| (self.index_to_coord(cell.0), cell.1))
     }
 
-    pub fn cell_iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
-        self.cells.iter_mut()
+    /// Returns a mutable iterator over all cells in the grid.
+    pub fn iter_mut<'a>(&'a mut self) -> impl Iterator<Item = (Coord, &'a mut T)> {
+        let rect = self.bounds;
+        self.cells
+            .iter_mut()
+            .enumerate()
+            .map(move |(index, cell)| (Self::index_to_coord_with_bounds(rect, index), cell))
     }
 
     /// Returns an iterator over the cells specified by the coords iterator.
@@ -180,6 +184,7 @@ impl<T> Grid<T> {
         }
     }
 
+    /// Converts a 2D Grid coordinate into a linear Vec index.
     fn coord_to_index<C: Into<Coord>>(&self, coord: C) -> Option<usize> {
         let coord = coord.into();
         if !self.bounds.contains(coord) {
@@ -189,10 +194,17 @@ impl<T> Grid<T> {
         Some((offset_coord.x + offset_coord.y * self.bounds.width()) as usize)
     }
 
+    /// Converts a linear Vec index into a 2D Grid coordinate.
     fn index_to_coord(&self, index: usize) -> Coord {
-        let y = (index as f32 / self.bounds.width() as f32).floor() as i32;
-        let x = index as i32 - (y * self.bounds.width()) as i32;
-        Coord::new(x, y) + self.bounds.offset()
+        Self::index_to_coord_with_bounds(self.bounds, index)
+    }
+
+    /// Use `index_to_coord` if possible. This exists so that `iter_mut` can
+    /// avoid borrowing `self`.
+    fn index_to_coord_with_bounds(bounds: Rect, index: usize) -> Coord {
+        let y = (index as f32 / bounds.width() as f32).floor() as i32;
+        let x = index as i32 - (y * bounds.width()) as i32;
+        Coord::new(x, y) + bounds.offset()
     }
 }
 

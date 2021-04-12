@@ -8,14 +8,14 @@ fn main() {
     let circle = Circle::new((9, 9), 7);
 
     // Fill grid background
-    for value in grid.cell_iter_mut() {
-        *value = '∙';
+    for (_coord, cell) in grid.iter_mut() {
+        *cell = '∙';
     }
 
     // Draw circle
     for result in grid.selection_iter_mut(circle.iter()) {
-        if let Ok((_coord, value)) = result {
-            *value = '#';
+        if let Ok((_coord, cell)) = result {
+            *cell = '#';
         }
     }
 
