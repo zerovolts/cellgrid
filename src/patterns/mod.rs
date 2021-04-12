@@ -6,11 +6,13 @@
 //! [`Grid::selection_iter_mut`](crate::grid::Grid::selection_iter_mut) to obtain
 //! actual cell values.
 
+mod circle;
 mod cluster;
 mod line;
 mod neighborhood;
 mod rect;
 
+pub use circle::{Circle, CircleIter};
 pub use cluster::{Cluster, ExternalBorderIter};
 pub use line::{Line, LineIter};
 pub use neighborhood::Neighborhood;
