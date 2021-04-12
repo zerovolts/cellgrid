@@ -8,6 +8,14 @@ use crate::{
     patterns::{Neighborhood, Rect},
 };
 
+/// The return type of all Grid iterators; a tuple of the cell coordinate and a
+/// reference to the cell data.
+pub type IterCell<'a, T> = (Coord, &'a T);
+
+/// The return type of all mutable Grid iterators; a tuple of the cell coordinate
+/// and a mutable reference to the cell data.
+pub type IterCellMut<'a, T> = (Coord, &'a mut T);
+
 /// The core type of this library. A 2D grid of cell type `T`.
 pub struct Grid<T> {
     /// Row-major, linear storage of cell data.
@@ -116,7 +124,7 @@ impl<T> Grid<T> {
     }
 
     /// Returns an iterator over all cells in the grid.
-    pub fn iter<'a>(&'a self) -> impl Iterator<Item = (Coord, &'a T)> {
+    pub fn iter<'a>(&'a self) -> impl Iterator<Item = IterCell<'a, T>> {
         self.cells
             .iter()
             .enumerate()
@@ -124,7 +132,7 @@ impl<T> Grid<T> {
     }
 
     /// Returns a mutable iterator over all cells in the grid.
-    pub fn iter_mut<'a>(&'a mut self) -> impl Iterator<Item = (Coord, &'a mut T)> {
+    pub fn iter_mut<'a>(&'a mut self) -> impl Iterator<Item = IterCellMut<'a, T>> {
         let rect = self.bounds;
         self.cells
             .iter_mut()
@@ -227,7 +235,7 @@ impl<'a, T, I> Iterator for SelectionIter<'a, T, I>
 where
     I: Iterator<Item = Coord>,
 {
-    type Item = Result<(Coord, &'a T), GridError>;
+    type Item = Result<IterCell<'a, T>, GridError>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if let Some(coord) = self.coords.next() {
@@ -250,7 +258,7 @@ impl<'a, T, I> Iterator for SelectionIterMut<'a, T, I>
 where
     I: Iterator<Item = Coord>,
 {
-    type Item = Result<(Coord, &'a mut T), GridError>;
+    type Item = Result<IterCellMut<'a, T>, GridError>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if let Some(coord) = self.coords.next() {
@@ -284,7 +292,7 @@ pub struct FloodIter<'a, T> {
 }
 
 impl<'a, T> Iterator for FloodIter<'a, T> {
-    type Item = (Coord, &'a T);
+    type Item = IterCell<'a, T>;
 
     fn next(&mut self) -> Option<Self::Item> {
         while self.coords_to_search.len() > 0 {
