@@ -10,7 +10,7 @@ fn main() {
     // The minimum distance a partition can get to the edge of a Rect.
     let min_size = 8;
 
-    let mut grid = VecGrid::<LifeState>::new(rect);
+    let mut grid = VecGrid::<Tile>::new(rect);
     let room_tree = grid
         .bounds
         .bsp(Orientation::Horizontal, &|rect, orientation| {
@@ -45,12 +45,12 @@ fn main() {
     let cluster = Cluster::new(rooms);
     for result in grid.selection_iter_mut(cluster.iter_interior()) {
         if let Ok((_coord, cell)) = result {
-            *cell = LifeState::Floor;
+            *cell = Tile::Floor;
         }
     }
     for result in grid.selection_iter_mut(cluster.iter_internal_border()) {
         if let Ok((_coord, cell)) = result {
-            *cell = LifeState::Wall;
+            *cell = Tile::Wall;
         }
     }
     println!("{}", grid);
@@ -81,24 +81,24 @@ fn shrink_randomly(rect: Rect, min_dimension: i32) -> Rect {
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
-enum LifeState {
+enum Tile {
     Void,
     Wall,
     Floor,
 }
 
-impl Default for LifeState {
+impl Default for Tile {
     fn default() -> Self {
-        LifeState::Void
+        Self::Void
     }
 }
 
-impl From<LifeState> for char {
-    fn from(ls: LifeState) -> char {
+impl From<Tile> for char {
+    fn from(ls: Tile) -> char {
         match ls {
-            LifeState::Void => ' ',
-            LifeState::Wall => '■',
-            LifeState::Floor => '∙',
+            Tile::Void => ' ',
+            Tile::Wall => '#',
+            Tile::Floor => '∙',
         }
     }
 }

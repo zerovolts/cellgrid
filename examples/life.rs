@@ -3,17 +3,25 @@ use rand::{
     Rng,
 };
 
+use std::{thread, time::Duration};
+
 use tapestry::{
     patterns::{Neighborhood, Rect},
     Coord, VecGrid,
 };
 
+const FPS: f32 = 30.0;
+const FRAME_MILLIS: f32 = 1000.0 / FPS;
+
 fn main() {
     let mut life_board = LifeBoard::random((16, 16));
 
-    for _i in 0..10 {
+    loop {
+        // Clear terminal
+        print!("\x1B[2J\x1B[1;1H");
         println!("{}", life_board.grid);
         life_board.step();
+        thread::sleep(Duration::from_millis(FRAME_MILLIS as u64));
     }
 }
 
@@ -91,7 +99,7 @@ impl Default for LifeState {
 impl From<LifeState> for char {
     fn from(ls: LifeState) -> char {
         match ls {
-            LifeState::Alive => 'O',
+            LifeState::Alive => '#',
             LifeState::Dead => '∙',
         }
     }
