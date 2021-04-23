@@ -5,7 +5,7 @@ use rand::{
 
 use tapestry::{
     patterns::{Neighborhood, Rect},
-    Coord, Grid,
+    Coord, VecGrid,
 };
 
 fn main() {
@@ -18,13 +18,13 @@ fn main() {
 }
 
 struct LifeBoard {
-    grid: Grid<LifeState>,
+    grid: VecGrid<LifeState>,
 }
 
 impl LifeBoard {
     fn random<C: Into<Coord>>(dimensions: C) -> Self {
         Self {
-            grid: Grid::with_generator(Rect::new(dimensions), |(_x, _y)| {
+            grid: VecGrid::with_generator(Rect::new(dimensions), |(_x, _y)| {
                 rand::random::<LifeState>()
             }),
         }

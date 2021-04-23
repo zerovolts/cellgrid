@@ -2,7 +2,7 @@ use rand::Rng;
 
 use tapestry::{
     patterns::{Cluster, Orientation, Rect},
-    Grid,
+    VecGrid,
 };
 
 fn main() {
@@ -10,7 +10,7 @@ fn main() {
     // The minimum distance a partition can get to the edge of a Rect.
     let min_size = 8;
 
-    let mut grid = Grid::<LifeState>::new(rect);
+    let mut grid = VecGrid::<LifeState>::new(rect);
     let room_tree = grid
         .bounds
         .bsp(Orientation::Horizontal, &|rect, orientation| {
