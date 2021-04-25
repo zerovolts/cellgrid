@@ -10,6 +10,7 @@ use crate::{
 };
 
 /// The core type of this library. A 2D grid of cell type `T`.
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct VecGrid<T> {
     /// Row-major, linear storage of cell data.
     pub cells: Vec<T>,

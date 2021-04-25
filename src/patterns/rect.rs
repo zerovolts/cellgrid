@@ -2,7 +2,7 @@ use std::ops::Range;
 
 use crate::coord::Coord;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Rect {
     pub top: i32,
     pub bottom: i32,
@@ -144,7 +144,7 @@ impl Rect {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Orientation {
     Horizontal,
     Vertical,
@@ -159,7 +159,7 @@ impl Orientation {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum BspTree {
     Node(Rect, Box<BspTree>, Box<BspTree>),
     Leaf(Rect),

@@ -8,6 +8,7 @@ use crate::{coord::Coord, patterns::Neighborhood};
 /// Represents various "layers" of a selection of coords (cluster).
 ///
 /// The internal and external borders straddle the "actual edge" of a coord cluster.
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Cluster(pub HashSet<Coord>);
 
 impl Cluster {

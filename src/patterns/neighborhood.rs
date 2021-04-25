@@ -20,6 +20,7 @@ const DIAG_NEIGHBOR_OFFSETS: [Coord; 4] = [
     Coord::NORTH_WEST,
 ];
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Neighborhood(Coord);
 
 impl Neighborhood {

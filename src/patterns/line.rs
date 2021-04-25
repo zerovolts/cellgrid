@@ -1,5 +1,6 @@
 use crate::coord::Coord;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Line {
     from: Coord,
     to: Coord,

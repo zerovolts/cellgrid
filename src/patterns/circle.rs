@@ -2,7 +2,7 @@ use std::collections::{HashSet, VecDeque};
 
 use crate::Coord;
 
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Circle {
     pub center: Coord,
     pub radius: i32,
