@@ -19,5 +19,8 @@ fn main() {
         }
     }
 
-    println!("{}", grid);
+    // Map grid of characters into a grid of strings, addings spaces between the
+    // characters.
+    let display_grid = grid.map(|cell| format!("{} ", cell.to_string()));
+    println!("{}", display_grid);
 }

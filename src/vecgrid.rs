@@ -110,6 +110,13 @@ impl<T> VecGrid<T> {
         }
     }
 
+    pub fn map<U, F>(&self, f: F) -> VecGrid<U>
+    where
+        F: Fn(&T) -> U,
+    {
+        VecGrid::<U>::with_generator(self.bounds, |coord: Coord| f(self.get(coord).unwrap()))
+    }
+
     /// Returns an iterator over all cells in the grid.
     pub fn iter<'a>(&'a self) -> impl Iterator<Item = IterCell<'a, T>> {
         Box::new(
@@ -311,19 +318,14 @@ impl<'a, T> Iterator for FloodIter<'a, T> {
 }
 
 // TODO: Generic Grid
-impl<T> fmt::Display for VecGrid<T>
-where
-    char: From<T>,
-    T: Copy,
-{
+impl fmt::Display for VecGrid<String> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let default = &"�".to_owned();
         for y in self.bounds.y_range() {
             for x in self.bounds.x_range() {
-                let c: char = match self.get((x, y)) {
-                    Some(cell) => char::from(*cell),
-                    None => '�',
-                };
-                if let Err(e) = write!(f, "{} ", c) {
+                let s = self.get((x, y)).unwrap_or(default);
+
+                if let Err(e) = write!(f, "{}", s) {
                     return Err(e);
                 }
             }

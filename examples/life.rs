@@ -19,7 +19,17 @@ fn main() {
     loop {
         // Clear terminal
         print!("\x1B[2J\x1B[1;1H");
-        println!("{}", life_board.grid);
+        // Map grid of characters into a grid of strings, addings spaces between the
+        // characters.
+        let display_grid = life_board.grid.map(|cell| {
+            format!("{} ", {
+                match cell {
+                    LifeState::Alive => '#',
+                    LifeState::Dead => '∙',
+                }
+            })
+        });
+        println!("{}", display_grid);
         life_board.step();
         thread::sleep(Duration::from_millis(FRAME_MILLIS as u64));
     }
@@ -93,15 +103,6 @@ enum LifeState {
 impl Default for LifeState {
     fn default() -> Self {
         LifeState::Dead
-    }
-}
-
-impl From<LifeState> for char {
-    fn from(ls: LifeState) -> char {
-        match ls {
-            LifeState::Alive => '#',
-            LifeState::Dead => '∙',
-        }
     }
 }
 

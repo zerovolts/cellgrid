@@ -53,7 +53,19 @@ fn main() {
             *cell = Tile::Wall;
         }
     }
-    println!("{}", grid);
+
+    // Map grid of characters into a grid of strings, addings spaces between the
+    // characters.
+    let display_grid = grid.map(|cell| {
+        format!("{} ", {
+            match cell {
+                Tile::Void => ' ',
+                Tile::Wall => '#',
+                Tile::Floor => '∙',
+            }
+        })
+    });
+    println!("{}", display_grid);
 }
 
 fn shrink_randomly(rect: Rect, min_dimension: i32) -> Rect {
@@ -90,15 +102,5 @@ enum Tile {
 impl Default for Tile {
     fn default() -> Self {
         Self::Void
-    }
-}
-
-impl From<Tile> for char {
-    fn from(ls: Tile) -> char {
-        match ls {
-            Tile::Void => ' ',
-            Tile::Wall => '#',
-            Tile::Floor => '∙',
-        }
     }
 }
