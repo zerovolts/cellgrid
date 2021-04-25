@@ -99,6 +99,17 @@ impl<T> VecGrid<T> {
         Self { cells, bounds }
     }
 
+    /// Copies all values of `other` into `self` at offset `position`.
+    pub fn embed<C>(&mut self, content: VecGrid<T>, position: C)
+    where
+        T: Copy,
+        C: Into<Coord> + Copy,
+    {
+        for (coord, &value) in content.iter() {
+            self.set(coord + position.into(), value);
+        }
+    }
+
     /// Returns an iterator over all cells in the grid.
     pub fn iter<'a>(&'a self) -> impl Iterator<Item = IterCell<'a, T>> {
         Box::new(
