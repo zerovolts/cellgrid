@@ -48,6 +48,14 @@ impl Coord {
     pub const fn negate_y(&self) -> Self {
         Self::new(self.x, -self.y)
     }
+
+    pub fn lerp(from: Self, to: Self, progress: f32) -> Self {
+        let diff = to - from;
+        from + Coord::new(
+            (diff.x as f32 * progress) as i32,
+            (diff.y as f32 * progress) as i32,
+        )
+    }
 }
 
 impl Add<Coord> for Coord {
@@ -184,5 +192,12 @@ mod tests {
         let excessive_coord_str = "(1, 2, 3)";
         assert!(insufficient_coord_str.parse::<Coord>() == Err(ParseCoordError::InvalidDimensions));
         assert!(excessive_coord_str.parse::<Coord>() == Err(ParseCoordError::InvalidDimensions));
+    }
+
+    #[test]
+    fn coord_lerp() {
+        let a = Coord::new(0, 0);
+        let b = Coord::new(10, 10);
+        assert_eq!(Coord::lerp(a, b, 0.5), Coord::new(5, 5));
     }
 }
