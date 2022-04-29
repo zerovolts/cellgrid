@@ -119,13 +119,11 @@ impl<T> VecGrid<T> {
 
     /// Returns an iterator over all cells in the grid.
     pub fn iter<'a>(&'a self) -> impl Iterator<Item = IterCell<'a, T>> {
-        Box::new(
-            self.cells
-                .iter()
-                .clone()
-                .enumerate()
-                .map(move |cell| (self.index_to_coord(cell.0), cell.1)),
-        )
+        self.cells
+            .iter()
+            .clone()
+            .enumerate()
+            .map(move |cell| (self.index_to_coord(cell.0), cell.1))
     }
 
     /// Returns a mutable iterator over all cells in the grid.
