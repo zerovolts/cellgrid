@@ -218,7 +218,6 @@ impl<T> VecGrid<T> {
 }
 
 pub struct SelectionIter<'a, T, I> {
-    // TODO: Generic Grid
     grid: &'a VecGrid<T>,
     coords: I,
 }
@@ -241,7 +240,6 @@ where
 }
 
 pub struct SelectionIterMut<'a, T, I> {
-    // TODO: Generic Grid
     grid: &'a mut VecGrid<T>,
     coords: I,
     visited_coords: HashSet<Coord>,
@@ -278,7 +276,6 @@ where
 }
 
 pub struct FloodIter<'a, T> {
-    // TODO: Generic Grid
     grid: &'a VecGrid<T>,
     predicate: Box<dyn Fn(&T) -> bool>,
     searched_coords: Vec<Coord>,
@@ -321,7 +318,6 @@ impl<'a, T> Iterator for FloodIter<'a, T> {
     }
 }
 
-// TODO: Generic Grid
 impl fmt::Display for VecGrid<String> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let default = &"�".to_owned();
