@@ -136,7 +136,10 @@ impl<T> VecGrid<T> {
     }
 
     /// Returns an iterator over the cells specified by the coords iterator.
-    pub fn selection_iter<I>(&self, coords: I) -> SelectionIter<T, I>
+    pub fn selection_iter<I>(
+        &self,
+        coords: I,
+    ) -> impl Iterator<Item = Result<IterCell<T>, GridError>>
     where
         I: Iterator<Item = Coord>,
     {
@@ -150,7 +153,10 @@ impl<T> VecGrid<T> {
     /// create multiple simultaneous mutable references to the cell), a
     /// [`GridError::AlreadyVisited`](GridError::AlreadyVisited) will be returned
     /// in place of the cell contents.
-    pub fn selection_iter_mut<I>(&mut self, coords: I) -> SelectionIterMut<T, I>
+    pub fn selection_iter_mut<I>(
+        &mut self,
+        coords: I,
+    ) -> impl Iterator<Item = Result<IterCellMut<T>, GridError>>
     where
         I: Iterator<Item = Coord>,
     {
@@ -175,7 +181,7 @@ impl<T> VecGrid<T> {
         &self,
         starting_coord: C,
         predicate: impl Fn(&T) -> bool + 'static,
-    ) -> FloodIter<T> {
+    ) -> impl Iterator<Item = IterCell<T>> {
         let mut coords_to_search = VecDeque::new();
         coords_to_search.push_back(starting_coord.into());
 
