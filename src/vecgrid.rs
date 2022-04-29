@@ -118,7 +118,7 @@ impl<T> VecGrid<T> {
     }
 
     /// Returns an iterator over all cells in the grid.
-    pub fn iter<'a>(&'a self) -> impl Iterator<Item = IterCell<'a, T>> {
+    pub fn iter(&self) -> impl Iterator<Item = IterCell<T>> {
         self.cells
             .iter()
             .clone()
@@ -127,7 +127,7 @@ impl<T> VecGrid<T> {
     }
 
     /// Returns a mutable iterator over all cells in the grid.
-    pub fn iter_mut<'a>(&'a mut self) -> impl Iterator<Item = IterCellMut<'a, T>> {
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = IterCellMut<T>> {
         let rect = self.bounds;
         self.cells
             .iter_mut()
